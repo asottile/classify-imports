@@ -8,8 +8,7 @@ venv:
 .PHONY: tests test
 tests: test
 test:
-	# TODO: why do namespace packages need --recreate?
-	tox --recreate
+	tox
 
 .PHONY: clean
 clean:
