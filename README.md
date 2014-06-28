@@ -7,6 +7,11 @@ aspy.refactor_imports
 Utilities for refactoring imports in python-like syntax.
 
 
+## Installation
+
+`pip install aspy.refactor_imports`
+
+
 ## Examples
 
 ### aspy.refactor_imports.import_obj
