@@ -14,6 +14,7 @@ from aspy.refactor_imports.classify import ImportType
     ('module', 'expected'),
     (
         ('os', ImportType.BUILTIN),
+        ('random', ImportType.BUILTIN),
         ('sys', ImportType.BUILTIN),
         ('pyramid', ImportType.THIRD_PARTY),
         ('aspy.refactor_imports', ImportType.APPLICATION),
