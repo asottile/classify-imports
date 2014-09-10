@@ -2,10 +2,6 @@ from __future__ import unicode_literals
 
 import imp
 import os.path
-import sys
-
-
-# pylint: disable=bad-continuation
 
 
 class ImportType(object):
@@ -19,9 +15,14 @@ class ImportType(object):
 
 
 def _module_path_is_local_and_is_not_symlinked(module_path):
+    localpath = os.path.abspath('.')
     abspath = os.path.abspath(module_path)
     realpath = os.path.realpath(module_path)
-    return abspath == realpath and os.path.exists(realpath)
+    return (
+        abspath.startswith(localpath) and
+        abspath == realpath and
+        os.path.exists(realpath)
+    )
 
 
 def _get_module_info(module_name):
@@ -40,11 +41,10 @@ def _get_module_info(module_name):
             since C extensions should probably won't exist at a top level
         - TODO: are there any other special cases to worry about?
 
-    :param module_name: the first segment of a module name, such as 'aspy'
-    :type module_name: text
+    :param text module_name: the first segment of a module name, such as 'aspy'
     """
     try:
-        return imp.find_module(module_name)[1:]
+        return (True,) + imp.find_module(module_name)[1:]
     except ImportError:
         # In the general case we probably can't import the modules because
         # our environment will be isolated from theirs.  However, our cwd
@@ -58,7 +58,7 @@ def _get_module_info(module_name):
     else:
         module_path = module_name
 
-    return (module_path, ('', '', imp.PY_SOURCE))
+    return False, module_path, ('', '', imp.PY_SOURCE)
 
 
 def classify_import(module_name):
@@ -71,18 +71,18 @@ def classify_import(module_name):
     """
     # Only really care about the first part of the path
     base_module_name = module_name.split('.')[0]
-    module_path, module_info = _get_module_info(base_module_name)
+    found, module_path, module_info = _get_module_info(base_module_name)
     # Relative imports: `from .foo import bar`
     if base_module_name == '':
         return ImportType.APPLICATION
+    # If imp tells us it is builtin, it is builtin
     elif module_info[2] == imp.C_BUILTIN:
         return ImportType.BUILTIN
-    elif (
-        module_path.startswith(sys.prefix) and
-        '-packages/' not in module_path
-    ):
-        return ImportType.BUILTIN
+    # If the module path exists in our cwd
     elif _module_path_is_local_and_is_not_symlinked(module_path):
         return ImportType.APPLICATION
+    # Otherwise we assume it is a system module or a third party module
+    elif found and '-packages/' not in module_path:
+        return ImportType.BUILTIN
     else:
         return ImportType.THIRD_PARTY
