@@ -1,6 +1,10 @@
+from __future__ import absolute_import
+from __future__ import unicode_literals
+
 import ast
 import collections
 import pytest
+import re
 
 from aspy.refactor_imports.import_obj import FromImport
 from aspy.refactor_imports.import_obj import FromImportSortKey
@@ -61,7 +65,7 @@ def test_import_import_import_statement(import_import):
 
 
 def test_import_import_sort_key(import_import):
-    assert import_import._sort_key == ImportImportSortKey('foo', 'bar')
+    assert import_import.sort_key == ImportImportSortKey('foo', 'bar')
 
 
 def test_import_import_cmp():
@@ -146,7 +150,7 @@ def test_from_import_import_statement(from_import):
 
 
 def test_from_import_sort_key(from_import):
-    ret = from_import._sort_key
+    ret = from_import.sort_key
     assert ret == FromImportSortKey('foo', 'bar', 'baz')
 
 
@@ -219,3 +223,10 @@ def test_from_import_to_text(import_str):
 )
 def test_from_import_to_text_normalizes_whitespace(import_str, expected):
     assert FromImport.from_str(import_str).to_text() == expected
+
+
+def test_from_import_repr(from_import):
+    assert re.match(
+        r"^FromImport\.from_str\([u]?'from Foo import bar as baz\\n'\)$",
+        repr(from_import),
+    )

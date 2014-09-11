@@ -42,18 +42,18 @@ class AbstractImportObj(object):
         return self._sort_key_type.from_python_ast(self.ast_obj)
 
     @cached_property
-    def _sort_key(self):
+    def sort_key(self):
         return namedtuple_lower(self.import_statement)
 
     def __lt__(self, other):
         if type(other) is not type(self):
             return NotImplemented
-        return self._sort_key < other._sort_key
+        return self.sort_key < other.sort_key
 
     def __eq__(self, other):
         if type(other) is not type(self):
             return NotImplemented
-        return self._sort_key == other._sort_key
+        return self.sort_key == other.sort_key
 
     @cached_property
     def has_multiple_imports(self):
@@ -77,6 +77,9 @@ class AbstractImportObj(object):
     def to_text(self):
         """Return a string representation terminated by a newline."""
         raise NotImplementedError
+
+    def __repr__(self):
+        return '{0}.from_str({1!r})'.format(type(self).__name__, self.to_text())
 
 
 def _check_only_one_name(ast_import):

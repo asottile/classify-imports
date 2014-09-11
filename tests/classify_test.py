@@ -13,6 +13,7 @@ from aspy.refactor_imports.classify import ImportType
 @pytest.mark.parametrize(
     ('module', 'expected'),
     (
+        ('__future__', ImportType.FUTURE),
         ('os', ImportType.BUILTIN),
         ('random', ImportType.BUILTIN),
         ('sys', ImportType.BUILTIN),
