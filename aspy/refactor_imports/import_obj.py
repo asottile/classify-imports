@@ -43,17 +43,16 @@ class AbstractImportObj(object):
 
     @cached_property
     def sort_key(self):
-        return namedtuple_lower(self.import_statement)
+        return namedtuple_lower(self.import_statement) + self.import_statement
 
     def __lt__(self, other):
-        if type(other) is not type(self):
-            return NotImplemented
         return self.sort_key < other.sort_key
 
     def __eq__(self, other):
-        if type(other) is not type(self):
-            return NotImplemented
         return self.sort_key == other.sort_key
+
+    def __ne__(self, other):
+        return not self == other
 
     @cached_property
     def has_multiple_imports(self):

@@ -65,7 +65,7 @@ def test_import_import_import_statement(import_import):
 
 
 def test_import_import_sort_key(import_import):
-    assert import_import.sort_key == ImportImportSortKey('foo', 'bar')
+    assert import_import.sort_key == ('foo', 'bar', 'Foo', 'bar')
 
 
 def test_import_import_cmp():
@@ -81,6 +81,13 @@ def test_import_import_cmp():
         ImportImport.from_str('import harp.darp'),
         ImportImport.from_str('import herp.derp'),
     ]
+
+
+def test_import_import_equality_casing():
+    assert (
+        ImportImport.from_str('import herp.DERP') !=
+        ImportImport.from_str('import herp.derp')
+    )
 
 
 @pytest.mark.parametrize(
@@ -150,8 +157,7 @@ def test_from_import_import_statement(from_import):
 
 
 def test_from_import_sort_key(from_import):
-    ret = from_import.sort_key
-    assert ret == FromImportSortKey('foo', 'bar', 'baz')
+    assert from_import.sort_key == ('foo', 'bar', 'baz', 'Foo', 'bar', 'baz')
 
 
 def test_from_import_cmp():
