@@ -54,6 +54,9 @@ class AbstractImportObj(object):
     def __ne__(self, other):
         return not self == other
 
+    def __hash__(self):
+        return hash(self.to_text())
+
     @cached_property
     def has_multiple_imports(self):
         """Return whether the import represents multiple imports.
