@@ -236,3 +236,10 @@ def test_from_import_repr(from_import):
         r"^FromImport\.from_str\([u]?'from Foo import bar as baz\\n'\)$",
         repr(from_import),
     )
+
+
+def test_hashable():
+    my_set = set()
+    my_set.add(FromImport.from_str('from foo import bar'))
+    my_set.add(FromImport.from_str('from foo import bar'))
+    assert len(my_set) == 1
