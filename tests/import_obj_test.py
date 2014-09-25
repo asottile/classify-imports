@@ -1,6 +1,10 @@
+from __future__ import absolute_import
+from __future__ import unicode_literals
+
 import ast
 import collections
 import pytest
+import re
 
 from aspy.refactor_imports.import_obj import FromImport
 from aspy.refactor_imports.import_obj import FromImportSortKey
@@ -61,7 +65,7 @@ def test_import_import_import_statement(import_import):
 
 
 def test_import_import_sort_key(import_import):
-    assert import_import._sort_key == ImportImportSortKey('foo', 'bar')
+    assert import_import.sort_key == ('foo', 'bar', 'Foo', 'bar')
 
 
 def test_import_import_cmp():
@@ -77,6 +81,13 @@ def test_import_import_cmp():
         ImportImport.from_str('import harp.darp'),
         ImportImport.from_str('import herp.derp'),
     ]
+
+
+def test_import_import_equality_casing():
+    assert (
+        ImportImport.from_str('import herp.DERP') !=
+        ImportImport.from_str('import herp.derp')
+    )
 
 
 @pytest.mark.parametrize(
@@ -146,8 +157,7 @@ def test_from_import_import_statement(from_import):
 
 
 def test_from_import_sort_key(from_import):
-    ret = from_import._sort_key
-    assert ret == FromImportSortKey('foo', 'bar', 'baz')
+    assert from_import.sort_key == ('foo', 'bar', 'baz', 'Foo', 'bar', 'baz')
 
 
 def test_from_import_cmp():
@@ -219,3 +229,17 @@ def test_from_import_to_text(import_str):
 )
 def test_from_import_to_text_normalizes_whitespace(import_str, expected):
     assert FromImport.from_str(import_str).to_text() == expected
+
+
+def test_from_import_repr(from_import):
+    assert re.match(
+        r"^FromImport\.from_str\([u]?'from Foo import bar as baz\\n'\)$",
+        repr(from_import),
+    )
+
+
+def test_hashable():
+    my_set = set()
+    my_set.add(FromImport.from_str('from foo import bar'))
+    my_set.add(FromImport.from_str('from foo import bar'))
+    assert len(my_set) == 1

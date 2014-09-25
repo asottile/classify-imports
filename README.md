@@ -56,12 +56,42 @@ u'import bar as baz\n'
  u'from a.b import baz\n']
 ```
 
+```python
+# Or to partition into blocks (even with mixed imports)
+>>> import buck.pprint as pprint
+>>> from aspy.refactor_imports.import_obj import FromImport
+>>> from aspy.refactor_imports.import_obj import ImportImport
+>>> from aspy.refactor_imports.sort import sort
+>>> partitioned = sort(
+    [
+        FromImport.from_str('from aspy import refactor_imports'),
+        ImportImport.from_str('import sys'),
+        FromImport.from_str('from pyramid.view import view_config'),
+        ImportImport.from_str('import cached_property'),
+    ],
+    separate=True,
+    import_before_from=True,
+))
+>>> pprint.pprint(partitioned)
+(
+    (ImportImport.from_str(u'import sys\n'),),
+    (
+        ImportImport.from_str(u'import cached_property\n'),
+        FromImport.from_str(u'from pyramid.view import view_config\n'),
+    ),
+    (FromImport.from_str(u'from aspy import refactor_imports\n'),),
+)
+
+```
+
 ### aspy.refactor_imports.classify
 
 #### Classify a module
 
 ```python
 >>> from aspy.refactor_imports.classify import classify_import
+>>> classify_import('__future__')
+u'FUTURE'
 >>> classify_import('aspy')
 u'APPLICATION'
 >>> classify_import('pyramid')
@@ -81,9 +111,10 @@ u'BUILTIN'
 class ImportType(object):
     __slots__ = ()
 
+    FUTURE = 'FUTURE'
     BUILTIN = 'BUILTIN'
     THIRD_PARTY = 'THIRD_PARTY'
     APPLICATION = 'APPLICATION'
 
-    __all__ = [BUILTIN, THIRD_PARTY, APPLICATION]
+    __all__ = [FUTURE, BUILTIN, THIRD_PARTY, APPLICATION]
 ```

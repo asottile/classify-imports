@@ -7,11 +7,12 @@ import os.path
 class ImportType(object):
     __slots__ = ()
 
+    FUTURE = 'FUTURE'
     BUILTIN = 'BUILTIN'
     THIRD_PARTY = 'THIRD_PARTY'
     APPLICATION = 'APPLICATION'
 
-    __all__ = [BUILTIN, THIRD_PARTY, APPLICATION]
+    __all__ = [FUTURE, BUILTIN, THIRD_PARTY, APPLICATION]
 
 
 def _module_path_is_local_and_is_not_symlinked(module_path):
@@ -73,7 +74,9 @@ def classify_import(module_name):
     base_module_name = module_name.split('.')[0]
     found, module_path, module_info = _get_module_info(base_module_name)
     # Relative imports: `from .foo import bar`
-    if base_module_name == '':
+    if base_module_name == '__future__':
+        return ImportType.FUTURE
+    elif base_module_name == '':
         return ImportType.APPLICATION
     # If imp tells us it is builtin, it is builtin
     elif module_info[2] == imp.C_BUILTIN:
