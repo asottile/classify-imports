@@ -17,6 +17,7 @@ from aspy.refactor_imports.classify import ImportType
         ('os', ImportType.BUILTIN),
         ('random', ImportType.BUILTIN),
         ('sys', ImportType.BUILTIN),
+        ('cached_property', ImportType.THIRD_PARTY),
         ('pyramid', ImportType.THIRD_PARTY),
         ('aspy.refactor_imports', ImportType.APPLICATION),
         ('.main_test', ImportType.APPLICATION),

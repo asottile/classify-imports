@@ -21,6 +21,10 @@ def _module_path_is_local_and_is_not_symlinked(module_path):
     realpath = os.path.realpath(module_path)
     return (
         abspath.startswith(localpath) and
+        # It's possible (and surprisingly likely) that the consumer has a
+        # virtualenv inside the project directory.  We'd like to still consider
+        # things in the virtualenv as third party.
+        os.sep not in abspath[len(localpath) + 1:] and
         abspath == realpath and
         os.path.exists(realpath)
     )
