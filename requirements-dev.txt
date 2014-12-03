@@ -3,5 +3,6 @@
 coverage
 flake8
 pre-commit
-pylint
+# pylint dropped py26 support
+pylint<1.4
 pytest

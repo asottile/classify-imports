@@ -32,6 +32,10 @@ def to_ast(s):
     (
         ('from foo import bar', FromImportSortKey('foo', 'bar', '')),
         ('from foo import bar as baz', FromImportSortKey('foo', 'bar', 'baz')),
+        ('from . import bar', FromImportSortKey('.', 'bar', '')),
+        ('from .foo import bar', FromImportSortKey('.foo', 'bar', '')),
+        ('from .. import bar', FromImportSortKey('..', 'bar', '')),
+        ('from ..foo import bar', FromImportSortKey('..foo', 'bar', '')),
     ),
 )
 def test_from_import_sort_key_from_python_ast(input_str, expected):
@@ -243,3 +247,16 @@ def test_hashable():
     my_set.add(FromImport.from_str('from foo import bar'))
     my_set.add(FromImport.from_str('from foo import bar'))
     assert len(my_set) == 1
+
+
+@pytest.mark.parametrize(
+    'input_str',
+    (
+        'from . import bar\n',
+        'from .foo import bar\n',
+        'from .. import bar\n',
+        'from ..foo import bar\n',
+    )
+)
+def test_local_imports(input_str):
+    assert FromImport.from_str(input_str).to_text() == input_str

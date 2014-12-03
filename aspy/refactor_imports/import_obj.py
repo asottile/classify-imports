@@ -84,6 +84,15 @@ class AbstractImportObj(object):
         return '{0}.from_str({1!r})'.format(type(self).__name__, self.to_text())
 
 
+def _from_import_module(ast_import):
+    return '{0}{1}'.format(
+        # Handle local imports
+        '.' * ast_import.level,
+        # from . import bar makes module `None`
+        ast_import.module or '',
+    )
+
+
 def _check_only_one_name(ast_import):
     if len(ast_import.names) != 1:
         raise AssertionError(
@@ -113,7 +122,7 @@ class FromImportSortKey(collections.namedtuple(
     def from_python_ast(cls, ast_import):
         _check_only_one_name(ast_import)
         return cls(
-            ast_import.module,
+            _from_import_module(ast_import),
             ast_import.names[0].name,
             ast_import.names[0].asname or '',
         )
@@ -166,5 +175,5 @@ class FromImport(AbstractImportObj):
         if self.has_multiple_imports:
             raise AssertionError('Cannot format multiple imports')
         return _format_from_import(
-            self.ast_obj.module, self.ast_obj.names[0],
+            _from_import_module(self.ast_obj), self.ast_obj.names[0],
         )
