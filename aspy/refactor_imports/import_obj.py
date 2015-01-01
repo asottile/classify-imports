@@ -177,3 +177,15 @@ class FromImport(AbstractImportObj):
         return _format_from_import(
             _from_import_module(self.ast_obj), self.ast_obj.names[0],
         )
+
+
+ast_type_to_import_type = dict(
+    (t._expected_ast_type, t) for t in (ImportImport, FromImport)
+)
+
+
+def import_obj_from_str(s):
+    """Returns an import object (either ImportImport or FromImport) from text.
+    """
+    ast_obj = ast.parse(s).body[0]
+    return ast_type_to_import_type[type(ast_obj)](ast_obj)

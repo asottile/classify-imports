@@ -10,6 +10,7 @@ from aspy.refactor_imports.import_obj import FromImport
 from aspy.refactor_imports.import_obj import FromImportSortKey
 from aspy.refactor_imports.import_obj import ImportImport
 from aspy.refactor_imports.import_obj import ImportImportSortKey
+from aspy.refactor_imports.import_obj import import_obj_from_str
 from aspy.refactor_imports.import_obj import namedtuple_lower
 
 
@@ -260,3 +261,14 @@ def test_hashable():
 )
 def test_local_imports(input_str):
     assert FromImport.from_str(input_str).to_text() == input_str
+
+
+@pytest.mark.parametrize(
+    ('input_str', 'expected'),
+    (
+        ('from foo import bar', FromImport.from_str('from foo import bar')),
+        ('import bar', ImportImport.from_str('import bar')),
+    ),
+)
+def test_import_obj_from_str(input_str, expected):
+    assert import_obj_from_str(input_str) == expected
