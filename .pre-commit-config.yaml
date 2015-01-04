@@ -13,6 +13,6 @@
     -   id: requirements-txt-fixer
     -   id: flake8
 -   repo: git@github.com:asottile/reorder_python_imports
-    sha: 4749f285414c8a5db2a5d89ab45e19d571465fa4
+    sha: ea9fa14a757bb210d849de5af8f8ba2c9744027a
     hooks:
-    -    id: reorder-python-imports
+    -   id: reorder-python-imports
