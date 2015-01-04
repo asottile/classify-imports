@@ -1,20 +1,19 @@
+# pylint: disable=redefined-outer-name,protected-access
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import ast
 import collections
-import pytest
 import re
+
+import pytest
 
 from aspy.refactor_imports.import_obj import FromImport
 from aspy.refactor_imports.import_obj import FromImportSortKey
+from aspy.refactor_imports.import_obj import import_obj_from_str
 from aspy.refactor_imports.import_obj import ImportImport
 from aspy.refactor_imports.import_obj import ImportImportSortKey
-from aspy.refactor_imports.import_obj import import_obj_from_str
 from aspy.refactor_imports.import_obj import namedtuple_lower
-
-
-# pylint: disable=redefined-outer-name,protected-access
 
 
 def test_namedtuple_lower():

@@ -3,10 +3,10 @@ from __future__ import unicode_literals
 
 import collections
 
-from aspy.refactor_imports.import_obj import FromImport
-from aspy.refactor_imports.import_obj import ImportImport
 from aspy.refactor_imports.classify import classify_import
 from aspy.refactor_imports.classify import ImportType
+from aspy.refactor_imports.import_obj import FromImport
+from aspy.refactor_imports.import_obj import ImportImport
 
 
 # For `import_before_from`

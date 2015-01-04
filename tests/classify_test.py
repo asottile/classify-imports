@@ -1,13 +1,12 @@
+# pylint: disable=redefined-outer-name,unused-argument
 import os
 import os.path
-import pytest
 import sys
+
+import pytest
 
 from aspy.refactor_imports.classify import classify_import
 from aspy.refactor_imports.classify import ImportType
-
-
-# pylint: disable=redefined-outer-name,unused-argument
 
 
 @pytest.mark.parametrize(

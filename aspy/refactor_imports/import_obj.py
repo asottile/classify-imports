@@ -1,10 +1,10 @@
+# pylint: disable=bad-continuation,protected-access
 from __future__ import unicode_literals
 
 import ast
 import collections
-from cached_property import cached_property
 
-# pylint: disable=bad-continuation,protected-access
+from cached_property import cached_property
 
 
 def namedtuple_lower(t):
