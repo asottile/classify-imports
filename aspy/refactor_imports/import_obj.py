@@ -125,13 +125,11 @@ def _ast_alias_to_s(ast_alias):
 
 
 def _format_import_import(ast_alias):
-    if isinstance(ast_alias, collections.Iterable):
-        return 'import {0}\n'.format(
-            ', '.join(
-                sorted(_ast_alias_to_s(ast_alias) for ast_alias in ast_alias)
-            ),
-        )
-    return 'import {0}\n'.format(_ast_alias_to_s(ast_alias))
+    return 'import {0}\n'.format(
+        ', '.join(
+            sorted(_ast_alias_to_s(ast_alias) for ast_alias in ast_alias)
+        ),
+    )
 
 
 class ImportImport(AbstractImportObj):
@@ -140,7 +138,7 @@ class ImportImport(AbstractImportObj):
 
     def split_imports(self):
         return [
-            type(self).from_str(_format_import_import(ast_alias))
+            type(self).from_str(_format_import_import([ast_alias]))
             for ast_alias in self.ast_obj.names
         ]
 
@@ -149,14 +147,12 @@ class ImportImport(AbstractImportObj):
 
 
 def _format_from_import(module, ast_alias):
-    if isinstance(ast_alias, collections.Iterable):
-        return 'from {0} import {1}\n'.format(
-            module,
-            ', '.join(
-                sorted(_ast_alias_to_s(ast_alias) for ast_alias in ast_alias)
-            ),
-        )
-    return 'from {0} import {1}\n'.format(module, _ast_alias_to_s(ast_alias))
+    return 'from {0} import {1}\n'.format(
+        module,
+        ', '.join(
+            sorted(_ast_alias_to_s(ast_alias) for ast_alias in ast_alias)
+        ),
+    )
 
 
 class FromImport(AbstractImportObj):
@@ -166,7 +162,7 @@ class FromImport(AbstractImportObj):
     def split_imports(self):
         return [
             type(self).from_str(_format_from_import(
-                self.ast_obj.module, ast_alias,
+                self.ast_obj.module, [ast_alias],
             ))
             for ast_alias in self.ast_obj.names
         ]
