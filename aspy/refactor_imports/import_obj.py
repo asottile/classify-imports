@@ -93,15 +93,6 @@ def _from_import_module(ast_import):
     )
 
 
-def _check_only_one_name(ast_import):
-    if len(ast_import.names) != 1:
-        raise AssertionError(
-            'Cannot construct import with multiple names: {0!r}'.format(
-                ast_import,
-            )
-        )
-
-
 class ImportImportSortKey(collections.namedtuple(
     'ImportImportSortKey', ['module', 'asname'],
 )):
@@ -109,7 +100,6 @@ class ImportImportSortKey(collections.namedtuple(
 
     @classmethod
     def from_python_ast(cls, ast_import):
-        _check_only_one_name(ast_import)
         return cls(ast_import.names[0].name, ast_import.names[0].asname or '')
 
 
@@ -120,7 +110,6 @@ class FromImportSortKey(collections.namedtuple(
 
     @classmethod
     def from_python_ast(cls, ast_import):
-        _check_only_one_name(ast_import)
         return cls(
             _from_import_module(ast_import),
             ast_import.names[0].name,
@@ -136,6 +125,9 @@ def _ast_alias_to_s(ast_alias):
 
 
 def _format_import_import(ast_alias):
+    if isinstance(ast_alias, collections.Iterable):
+        names = ', '.join(_ast_alias_to_s(ast_alias) for ast_alias in ast_alias)
+        return 'import {0}\n'.format(names)
     return 'import {0}\n'.format(_ast_alias_to_s(ast_alias))
 
 
@@ -150,12 +142,13 @@ class ImportImport(AbstractImportObj):
         ]
 
     def to_text(self):
-        if self.has_multiple_imports:
-            raise AssertionError('Cannot format multiple imports')
-        return _format_import_import(self.ast_obj.names[0])
+        return _format_import_import(self.ast_obj.names)
 
 
 def _format_from_import(module, ast_alias):
+    if isinstance(ast_alias, collections.Iterable):
+        names = ', '.join(_ast_alias_to_s(ast_alias) for ast_alias in ast_alias)
+        return 'from {0} import {1}\n'.format(module, names)
     return 'from {0} import {1}\n'.format(module, _ast_alias_to_s(ast_alias))
 
 
@@ -172,10 +165,8 @@ class FromImport(AbstractImportObj):
         ]
 
     def to_text(self):
-        if self.has_multiple_imports:
-            raise AssertionError('Cannot format multiple imports')
         return _format_from_import(
-            _from_import_module(self.ast_obj), self.ast_obj.names[0],
+            _from_import_module(self.ast_obj), self.ast_obj.names,
         )
 
 

@@ -266,7 +266,9 @@ def test_local_imports(input_str):
     ('input_str', 'expected'),
     (
         ('from foo import bar', FromImport.from_str('from foo import bar')),
+        ('from foo import bar, baz', FromImport.from_str('from foo import bar, baz')),
         ('import bar', ImportImport.from_str('import bar')),
+        ('import bar, baz', ImportImport.from_str('import bar, baz')),
     ),
 )
 def test_import_obj_from_str(input_str, expected):
