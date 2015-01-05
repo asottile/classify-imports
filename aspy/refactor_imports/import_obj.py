@@ -126,8 +126,11 @@ def _ast_alias_to_s(ast_alias):
 
 def _format_import_import(ast_alias):
     if isinstance(ast_alias, collections.Iterable):
-        names = ', '.join(_ast_alias_to_s(ast_alias) for ast_alias in ast_alias)
-        return 'import {0}\n'.format(names)
+        return 'import {0}\n'.format(
+            ', '.join(
+                sorted(_ast_alias_to_s(ast_alias) for ast_alias in ast_alias)
+            ),
+        )
     return 'import {0}\n'.format(_ast_alias_to_s(ast_alias))
 
 
@@ -147,8 +150,12 @@ class ImportImport(AbstractImportObj):
 
 def _format_from_import(module, ast_alias):
     if isinstance(ast_alias, collections.Iterable):
-        names = ', '.join(_ast_alias_to_s(ast_alias) for ast_alias in ast_alias)
-        return 'from {0} import {1}\n'.format(module, names)
+        return 'from {0} import {1}\n'.format(
+            module,
+            ', '.join(
+                sorted(_ast_alias_to_s(ast_alias) for ast_alias in ast_alias)
+            ),
+        )
     return 'from {0} import {1}\n'.format(module, _ast_alias_to_s(ast_alias))
 
 
