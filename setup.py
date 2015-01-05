@@ -5,7 +5,7 @@ setup(
     name='aspy.refactor_imports',
     description="Utilities for refactoring imports in python-like syntax.",
     url='https://github.com/asottile/aspy.refactor_imports',
-    version='0.2.3',
+    version='0.3.0',
 
     author='Anthony Sottile',
     author_email='asottile@umich.edu',
