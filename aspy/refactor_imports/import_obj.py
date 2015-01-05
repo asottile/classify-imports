@@ -124,10 +124,10 @@ def _ast_alias_to_s(ast_alias):
         return ast_alias.name
 
 
-def _format_import_import(ast_alias):
+def _format_import_import(ast_aliases):
     return 'import {0}\n'.format(
         ', '.join(
-            sorted(_ast_alias_to_s(ast_alias) for ast_alias in ast_alias)
+            sorted(_ast_alias_to_s(ast_alias) for ast_alias in ast_aliases)
         ),
     )
 
@@ -146,11 +146,11 @@ class ImportImport(AbstractImportObj):
         return _format_import_import(self.ast_obj.names)
 
 
-def _format_from_import(module, ast_alias):
+def _format_from_import(module, ast_aliases):
     return 'from {0} import {1}\n'.format(
         module,
         ', '.join(
-            sorted(_ast_alias_to_s(ast_alias) for ast_alias in ast_alias)
+            sorted(_ast_alias_to_s(ast_alias) for ast_alias in ast_aliases)
         ),
     )
 
