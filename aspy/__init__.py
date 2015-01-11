@@ -1,5 +1,7 @@
 # This is a namespace package
-from pkgutil import extend_path  # pragma: no cover
-
-
-__path__ = extend_path(__path__, __name__)  # pragma: no cover
+try:  # pragma: no cover
+    import pkg_resources
+    pkg_resources.declare_namespace(__name__)
+except ImportError:  # pragma: no cover
+    import pkgutil
+    __path__ = pkgutil.extend_path(__path__, __name__)

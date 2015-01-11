@@ -5,7 +5,7 @@ setup(
     name='aspy.refactor_imports',
     description="Utilities for refactoring imports in python-like syntax.",
     url='https://github.com/asottile/aspy.refactor_imports',
-    version='0.3.0',
+    version='0.3.1',
 
     author='Anthony Sottile',
     author_email='asottile@umich.edu',
@@ -20,7 +20,7 @@ setup(
         'Programming Language :: Python :: Implementation :: PyPy',
     ],
 
-    packages=['aspy.refactor_imports'],
+    packages=['aspy', 'aspy.refactor_imports'],
     namespace_packages=['aspy'],
     install_requires=[
         'cached_property',
