@@ -56,12 +56,17 @@ def _get_module_info(module_name):
         # should be their project root
         pass
 
-    if os.path.exists(module_name):
+    if (
+            os.path.exists(module_name) and
+            os.path.isdir(module_name) and
+            os.listdir(module_name)
+    ):
         module_path = module_name
     elif os.path.exists(module_name + '.py'):
         module_path = module_name + '.py'
     else:
-        module_path = module_name
+        # We did not find a local file that looked like the module
+        module_path = module_name + '.notlocal'
 
     return False, module_path, ('', '', imp.PY_SOURCE)
 
