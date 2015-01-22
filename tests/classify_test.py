@@ -75,3 +75,9 @@ def test_package_existing_is_application_level(in_tmpdir, no_empty_path):
     open(os.path.join('my_package', '__init__.py'), 'w').close()
     ret = classify_import('my_package')
     assert ret is ImportType.APPLICATION
+
+
+def test_empty_directory_is_not_package(in_tmpdir, no_empty_path):
+    os.mkdir('my_package')
+    ret = classify_import('my_package')
+    assert ret is ImportType.THIRD_PARTY
