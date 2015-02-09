@@ -71,6 +71,9 @@ def _get_module_info(module_name):
     return False, module_path, ('', '', imp.PY_SOURCE)
 
 
+PACKAGES_PATH = '-packages' + os.sep
+
+
 def classify_import(module_name):
     """Classifies an import by its package.
 
@@ -94,7 +97,7 @@ def classify_import(module_name):
     elif _module_path_is_local_and_is_not_symlinked(module_path):
         return ImportType.APPLICATION
     # Otherwise we assume it is a system module or a third party module
-    elif found and '-packages/' not in module_path:
+    elif found and PACKAGES_PATH not in module_path:
         return ImportType.BUILTIN
     else:
         return ImportType.THIRD_PARTY

@@ -1,0 +1,13 @@
+environment:
+    matrix:
+        - TOXENV: py27
+        - TOXENV: py34
+
+install:
+    - "SET PATH=C:\\Python34;C:\\Python34\\Scripts;%PATH%"
+    - pip install tox
+
+# Not a C# project
+build: false
+
+test_script: tox
