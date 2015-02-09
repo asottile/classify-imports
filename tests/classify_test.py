@@ -56,10 +56,14 @@ def no_empty_path():
         yield
 
 
-def test_symlink_path_different(in_tmpdir, no_empty_path):
+@pytest.mark.xfail(
+    os.name == 'nt',
+    reason='Expected fail for no symlink support',
+)
+def test_symlink_path_different(in_tmpdir, no_empty_path):  # pragma: no cover
     # symlink a file, these are likely to not be application files
     open('dest_file.py', 'w').close()
-    os.symlink('dest_file.py', 'src_file.py')
+    os.symlink('dest_file.py', 'src_file.py')  # pylint:disable=no-member
     ret = classify_import('src_file')
     assert ret is ImportType.THIRD_PARTY
 

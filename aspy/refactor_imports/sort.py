@@ -64,21 +64,24 @@ def sort(imports, separate=True, import_before_from=True):
         import sys
     """
     if separate:
-        classify_func = lambda obj: classify_import(obj.import_statement.module)
+        def classify_func(obj):
+            return classify_import(obj.import_statement.module)
         types = ImportType.__all__
     else:
         # A little cheaty, this allows future imports to sort before others
-        classify_func = (
-            lambda obj:
-            classify_import(obj.import_statement.module) ==
-            ImportType.FUTURE
-        )
+        def classify_func(obj):
+            return (
+                classify_import(obj.import_statement.module) ==
+                ImportType.FUTURE
+            )
         types = [True, False]
 
     if import_before_from:
-        sort_within = lambda obj: (CLS_TO_INDEX[type(obj)],) + obj.sort_key
+        def sort_within(obj):
+            return (CLS_TO_INDEX[type(obj)],) + obj.sort_key
     else:
-        sort_within = lambda obj: tuple(obj.sort_key)
+        def sort_within(obj):
+            return tuple(obj.sort_key)
 
     # Partition the imports
     imports_partitioned = collections.defaultdict(list)
