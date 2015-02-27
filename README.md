@@ -1,6 +1,6 @@
 [![Build Status](https://travis-ci.org/asottile/aspy.refactor_imports.svg?branch=master)](https://travis-ci.org/asottile/aspy.refactor_imports)
 [![Coverage Status](https://img.shields.io/coveralls/asottile/aspy.refactor_imports.svg?branch=master)](https://coveralls.io/r/asottile/aspy.refactor_imports)
-[![Build status](https://ci.appveyor.com/api/projects/status/1x3de58cbkjxoxey?svg=true)](https://ci.appveyor.com/project/asottile/aspy-refactor-imports)
+[![Build status](https://ci.appveyor.com/api/projects/status/1x3de58cbkjxoxey/branch/master?svg=true)](https://ci.appveyor.com/project/asottile/aspy-refactor-imports/branch/master)
 
 aspy.refactor_imports
 ==========
