@@ -203,6 +203,13 @@ def test_from_import_has_multiple_imports(input_str, expected):
                 FromImport.from_str('from foo import baz'),
             ],
         ),
+        (
+            'from .foo import bar, baz',
+            [
+                FromImport.from_str('from .foo import bar'),
+                FromImport.from_str('from .foo import baz'),
+            ],
+        ),
     ),
 )
 def test_from_import_split_imports(input_str, expected):

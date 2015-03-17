@@ -162,7 +162,7 @@ class FromImport(AbstractImportObj):
     def split_imports(self):
         return [
             type(self).from_str(_format_from_import(
-                self.ast_obj.module, [ast_alias],
+                _from_import_module(self.ast_obj), [ast_alias],
             ))
             for ast_alias in self.ast_obj.names
         ]
