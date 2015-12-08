@@ -1,3 +1,4 @@
+# pylint: disable=unused-argument
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
@@ -83,3 +84,24 @@ def test_future_separate_block_non_separate():
         (FromImport.from_str('from __future__ import absolute_import'),),
         (ImportImport.from_str('import pyramid'),),
     )
+
+
+def test_passes_through_kwargs_to_classify(in_tmpdir, no_empty_path):
+    # Make a module
+    open('my_module.py', 'w').close()
+
+    imports = (
+        ImportImport.from_str('import my_module'),
+        ImportImport.from_str('import pyramid'),
+    )
+    # Without kwargs, my_module should get classified as application (in a
+    # separate group).
+    ret = sort(imports)
+    assert ret == (
+        (ImportImport.from_str('import pyramid'),),
+        (ImportImport.from_str('import my_module'),),
+    )
+    # But when we put the application at a nonexistent directory
+    # it'll be third party (and in the same group as pyramid)
+    ret = sort(imports, application_directories=('dne',))
+    assert ret == (imports,)
