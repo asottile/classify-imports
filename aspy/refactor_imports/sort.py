@@ -16,7 +16,7 @@ CLS_TO_INDEX = {
 }
 
 
-def sort(imports, separate=True, import_before_from=True):
+def sort(imports, separate=True, import_before_from=True, **classify_kwargs):
     """Sort import objects into groups.
 
     :param list imports: FromImport / ImportImport objects
@@ -65,15 +65,16 @@ def sort(imports, separate=True, import_before_from=True):
     """
     if separate:
         def classify_func(obj):
-            return classify_import(obj.import_statement.module)
+            return classify_import(
+                obj.import_statement.module, **classify_kwargs
+            )
         types = ImportType.__all__
     else:
         # A little cheaty, this allows future imports to sort before others
         def classify_func(obj):
-            return (
-                classify_import(obj.import_statement.module) ==
-                ImportType.FUTURE
-            )
+            return classify_import(
+                obj.import_statement.module, **classify_kwargs
+            ) == ImportType.FUTURE
         types = [True, False]
 
     if import_before_from:
