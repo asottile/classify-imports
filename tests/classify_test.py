@@ -29,16 +29,8 @@ def test_classify_import(module, expected):
 
 @pytest.yield_fixture
 def in_tmpdir(tmpdir):
-    old_path = os.getcwd()
-    os.chdir(tmpdir.strpath)
-    try:
+    with tmpdir.as_cwd():
         yield tmpdir.strpath
-    finally:
-        os.chdir(old_path)
-
-
-def test_in_tmpdir(in_tmpdir):
-    assert os.getcwd() == in_tmpdir
 
 
 @pytest.yield_fixture
@@ -85,3 +77,15 @@ def test_empty_directory_is_not_package(in_tmpdir, no_empty_path):
     os.mkdir('my_package')
     ret = classify_import('my_package')
     assert ret is ImportType.THIRD_PARTY
+
+
+def test_application_directories(in_tmpdir, no_empty_path):
+    # Similar to @bukzor's testing setup
+    os.makedirs('tests/testing')
+    open('tests/testing/__init__.py', 'w').close()
+    # Should be classified 3rd party without argument
+    ret = classify_import('testing')
+    assert ret is ImportType.THIRD_PARTY
+    # Should be application with extra directories
+    ret = classify_import('testing', application_directories=('.', 'tests'))
+    assert ret is ImportType.APPLICATION
