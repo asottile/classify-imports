@@ -5,6 +5,21 @@ import sys
 import pytest
 
 
+@pytest.yield_fixture(autouse=True)
+def no_warnings(recwarn):
+    yield
+    assert len(tuple(
+        warning for warning in recwarn
+        # python2 + pypy warn:
+        # ImportWarning: Not importing directory '...' missing __init__.py
+        if not (
+            isinstance(warning.message, ImportWarning) and
+            str(warning.message).startswith('Not importing directory ') and
+            str(warning.message).endswith(' missing __init__.py')
+        )
+    )) == 0
+
+
 @pytest.yield_fixture
 def in_tmpdir(tmpdir):
     with tmpdir.as_cwd():
