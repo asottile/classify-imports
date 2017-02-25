@@ -1,4 +1,3 @@
-# pylint: disable=unused-argument
 import os
 import os.path
 
@@ -33,7 +32,7 @@ def test_classify_import(module, expected):
 def test_symlink_path_different(in_tmpdir, no_empty_path):  # pragma: no cover
     # symlink a file, these are likely to not be application files
     open('dest_file.py', 'w').close()
-    os.symlink('dest_file.py', 'src_file.py')  # pylint:disable=no-member
+    os.symlink('dest_file.py', 'src_file.py')
     ret = classify_import('src_file')
     assert ret is ImportType.THIRD_PARTY
 

@@ -1,4 +1,3 @@
-# pylint: disable=redefined-outer-name,protected-access
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
@@ -273,7 +272,10 @@ def test_local_imports(input_str):
     ('input_str', 'expected'),
     (
         ('from foo import bar', FromImport.from_str('from foo import bar')),
-        ('from foo import bar, baz', FromImport.from_str('from foo import bar, baz')),
+        (
+            'from foo import bar, baz',
+            FromImport.from_str('from foo import bar, baz'),
+        ),
         ('import bar', ImportImport.from_str('import bar')),
         ('import bar, baz', ImportImport.from_str('import bar, baz')),
     ),
