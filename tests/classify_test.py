@@ -33,8 +33,8 @@ def test_classify_import(module, expected):
 )
 def test_symlink_path_different(in_tmpdir, no_empty_path):  # pragma: no cover
     # symlink a file, these are likely to not be application files
-    open('dest_file.py', 'w').close()
-    os.symlink('dest_file.py', 'src_file.py')
+    in_tmpdir.join('dest_file.py').ensure()
+    in_tmpdir.join('src_file.py').mksymlinkto('dest-file.py')
     ret = classify_import('src_file')
     assert ret is ImportType.THIRD_PARTY
 
@@ -71,28 +71,26 @@ def test_classify_pythonpath_multiple(in_tmpdir):
 
 
 def test_file_existing_is_application_level(in_tmpdir, no_empty_path):
-    open('my_file.py', 'w').close()
+    in_tmpdir.join('my_file.py').ensure()
     ret = classify_import('my_file')
     assert ret is ImportType.APPLICATION
 
 
 def test_package_existing_is_application_level(in_tmpdir, no_empty_path):
-    os.mkdir('my_package')
-    open(os.path.join('my_package', '__init__.py'), 'w').close()
+    in_tmpdir.join('my_package').ensure_dir().join('__init__.py').ensure()
     ret = classify_import('my_package')
     assert ret is ImportType.APPLICATION
 
 
 def test_empty_directory_is_not_package(in_tmpdir, no_empty_path):
-    os.mkdir('my_package')
+    in_tmpdir.join('my_package').ensure_dir()
     ret = classify_import('my_package')
     assert ret is ImportType.THIRD_PARTY
 
 
 def test_application_directories(in_tmpdir, no_empty_path):
     # Similar to @bukzor's testing setup
-    os.makedirs('tests/testing')
-    open('tests/testing/__init__.py', 'w').close()
+    in_tmpdir.join('tests/testing').ensure_dir().join('__init__.py').ensure()
     # Should be classified 3rd party without argument
     ret = classify_import('testing')
     assert ret is ImportType.THIRD_PARTY
