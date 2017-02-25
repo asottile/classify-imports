@@ -1,4 +1,3 @@
-# pylint: disable=bad-continuation,protected-access
 from __future__ import unicode_literals
 
 import ast
@@ -29,7 +28,7 @@ class AbstractImportObj(object):
         ast_obj = ast.parse(s).body[0]
         if not isinstance(ast_obj, cls._expected_ast_type):
             raise AssertionError(
-                'Expected ast of type {0!r} but got {1!r}'.format(
+                'Expected ast of type {!r} but got {!r}'.format(
                     cls._expected_ast_type,
                     ast_obj
                 )
@@ -81,11 +80,11 @@ class AbstractImportObj(object):
         raise NotImplementedError
 
     def __repr__(self):
-        return '{0}.from_str({1!r})'.format(type(self).__name__, self.to_text())
+        return '{}.from_str({!r})'.format(type(self).__name__, self.to_text())
 
 
 def _from_import_module(ast_import):
-    return '{0}{1}'.format(
+    return '{}{}'.format(
         # Handle local imports
         '.' * ast_import.level,
         # from . import bar makes module `None`
@@ -119,13 +118,13 @@ class FromImportSortKey(collections.namedtuple(
 
 def _ast_alias_to_s(ast_alias):
     if ast_alias.asname:
-        return '{0} as {1}'.format(ast_alias.name, ast_alias.asname)
+        return '{} as {}'.format(ast_alias.name, ast_alias.asname)
     else:
         return ast_alias.name
 
 
 def _format_import_import(ast_aliases):
-    return 'import {0}\n'.format(
+    return 'import {}\n'.format(
         ', '.join(
             sorted(_ast_alias_to_s(ast_alias) for ast_alias in ast_aliases)
         ),
@@ -147,7 +146,7 @@ class ImportImport(AbstractImportObj):
 
 
 def _format_from_import(module, ast_aliases):
-    return 'from {0} import {1}\n'.format(
+    return 'from {} import {}\n'.format(
         module,
         ', '.join(
             sorted(_ast_alias_to_s(ast_alias) for ast_alias in ast_aliases)
@@ -173,9 +172,9 @@ class FromImport(AbstractImportObj):
         )
 
 
-ast_type_to_import_type = dict(
-    (t._expected_ast_type, t) for t in (ImportImport, FromImport)
-)
+ast_type_to_import_type = {
+    t._expected_ast_type: t for t in (ImportImport, FromImport)
+}
 
 
 def import_obj_from_str(s):

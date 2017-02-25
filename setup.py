@@ -13,17 +13,16 @@ setup(
     platforms='all',
     classifiers=[
         'License :: OSI Approved :: MIT License',
-        'Programming Language :: Python :: 2.6',
+        'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3.3',
-        'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: Implementation :: CPython',
         'Programming Language :: Python :: Implementation :: PyPy',
     ],
 
     packages=['aspy', 'aspy.refactor_imports'],
     namespace_packages=['aspy'],
-    install_requires=[
-        'cached_property',
-    ],
+    install_requires=['cached_property'],
 )
