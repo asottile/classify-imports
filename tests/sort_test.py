@@ -87,7 +87,7 @@ def test_future_separate_block_non_separate():
 
 def test_passes_through_kwargs_to_classify(in_tmpdir, no_empty_path):
     # Make a module
-    open('my_module.py', 'w').close()
+    in_tmpdir.join('my_module.py').ensure()
 
     imports = (
         ImportImport.from_str('import my_module'),
