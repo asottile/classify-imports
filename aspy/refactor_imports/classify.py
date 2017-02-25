@@ -12,7 +12,7 @@ class ImportType(object):
     THIRD_PARTY = 'THIRD_PARTY'
     APPLICATION = 'APPLICATION'
 
-    __all__ = [FUTURE, BUILTIN, THIRD_PARTY, APPLICATION]
+    __all__ = (FUTURE, BUILTIN, THIRD_PARTY, APPLICATION)
 
 
 def _module_path_is_local_and_is_not_symlinked(
