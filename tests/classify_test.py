@@ -1,6 +1,8 @@
-import os
+import contextlib
 import os.path
+import sys
 
+import mock
 import pytest
 
 from aspy.refactor_imports.classify import classify_import
@@ -35,6 +37,37 @@ def test_symlink_path_different(in_tmpdir, no_empty_path):  # pragma: no cover
     os.symlink('dest_file.py', 'src_file.py')
     ret = classify_import('src_file')
     assert ret is ImportType.THIRD_PARTY
+
+
+@contextlib.contextmanager
+def in_sys_path_and_pythonpath(pth):
+    paths = [os.path.abspath(p) for p in pth.split(os.pathsep)]
+
+    path_before = sys.path[:]
+    sys.path[:] = paths + path_before
+    try:
+        with mock.patch.dict(os.environ, {'PYTHONPATH': pth}):
+            yield
+    finally:
+        sys.path[:] = path_before
+
+
+def test_classify_pythonpath_third_party(in_tmpdir):
+    in_tmpdir.join('ppth').ensure_dir().join('f.py').ensure()
+    with in_sys_path_and_pythonpath('ppth'):
+        assert classify_import('f') is ImportType.THIRD_PARTY
+
+
+def test_classify_pythonpath_dot_app(in_tmpdir):
+    in_tmpdir.join('f.py').ensure()
+    with in_sys_path_and_pythonpath('.'):
+        assert classify_import('f') is ImportType.APPLICATION
+
+
+def test_classify_pythonpath_multiple(in_tmpdir):
+    in_tmpdir.join('ppth').ensure_dir().join('f.py').ensure()
+    with in_sys_path_and_pythonpath(os.pathsep.join(('ppth', 'foo'))):
+        assert classify_import('f') is ImportType.THIRD_PARTY
 
 
 def test_file_existing_is_application_level(in_tmpdir, no_empty_path):

@@ -15,6 +15,19 @@ class ImportType(object):
     __all__ = (FUTURE, BUILTIN, THIRD_PARTY, APPLICATION)
 
 
+def _pythonpath_dirs():
+    if 'PYTHONPATH' not in os.environ:
+        return set()
+
+    splitpath = os.environ['PYTHONPATH'].split(os.pathsep)
+    return {os.path.realpath(p) for p in splitpath} - {os.path.realpath('.')}
+
+
+def _due_to_pythonpath(module_path):
+    mod_dir, _ = os.path.split(os.path.realpath(module_path))
+    return mod_dir in _pythonpath_dirs()
+
+
 def _module_path_is_local_and_is_not_symlinked(
         module_path, application_directories,
 ):
@@ -119,7 +132,11 @@ def classify_import(module_name, application_directories=('.',)):
     ):
         return ImportType.APPLICATION
     # Otherwise we assume it is a system module or a third party module
-    elif found and PACKAGES_PATH not in module_path:
+    elif (
+            found and
+            PACKAGES_PATH not in module_path and
+            not _due_to_pythonpath(module_path)
+    ):
         return ImportType.BUILTIN
     else:
         return ImportType.THIRD_PARTY
