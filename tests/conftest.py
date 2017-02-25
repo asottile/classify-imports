@@ -24,7 +24,7 @@ def no_warnings(recwarn):
 @pytest.yield_fixture
 def in_tmpdir(tmpdir):
     with tmpdir.as_cwd():
-        yield
+        yield tmpdir
 
 
 @pytest.yield_fixture
