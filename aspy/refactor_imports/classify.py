@@ -37,11 +37,10 @@ def _module_path_is_local_and_is_not_symlinked(
 
 def _find_module_closes_file(module_name):
     """Fixes a python3 warning about not explicitly closing the module file"""
-    ret = imp.find_module(module_name)
-    file_obj = ret[0]
+    file_obj, pathname, description = imp.find_module(module_name)
     if file_obj:
         file_obj.close()
-    return ret
+    return pathname, description
 
 
 def _get_module_info(module_name, application_directories):
@@ -63,7 +62,7 @@ def _get_module_info(module_name, application_directories):
     :param text module_name: the first segment of a module name, such as 'aspy'
     """
     try:
-        return (True,) + _find_module_closes_file(module_name)[1:]
+        return (True,) + _find_module_closes_file(module_name)
     except ImportError:
         # In the general case we probably can't import the modules because
         # our environment will be isolated from theirs.
