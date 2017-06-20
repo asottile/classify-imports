@@ -3,7 +3,7 @@ from setuptools import setup
 
 setup(
     name='aspy.refactor_imports',
-    description="Utilities for refactoring imports in python-like syntax.",
+    description='Utilities for refactoring imports in python-like syntax.',
     url='https://github.com/asottile/aspy.refactor_imports',
     version='0.5.2',
 
