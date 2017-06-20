@@ -13,6 +13,10 @@ IMPORTS = (
     ImportImport.from_str('import pyramid'),
 )
 
+RELATIVE_IMPORTS = IMPORTS + (
+    FromImport.from_str("from .sort import sort"),
+)
+
 
 def test_separate_import_before_from():
     ret = sort(IMPORTS, separate=True, import_before_from=True)
@@ -104,3 +108,37 @@ def test_passes_through_kwargs_to_classify(in_tmpdir, no_empty_path):
     # it'll be third party (and in the same group as pyramid)
     ret = sort(imports, application_directories=('dne',))
     assert ret == (imports,)
+
+
+def test_separate_relative():
+    ret = sort(RELATIVE_IMPORTS)
+    assert ret == (
+        (
+            ImportImport.from_str('import sys'),
+            FromImport.from_str('from os import path'),
+        ),
+        (
+            ImportImport.from_str('import pyramid'),
+        ),
+        (
+            FromImport.from_str('from .sort import sort'),
+            FromImport.from_str('from aspy import refactor_imports'),
+        ),
+    )
+
+    ret = sort(RELATIVE_IMPORTS, separate_relative=True)
+    assert ret == (
+        (
+            ImportImport.from_str('import sys'),
+            FromImport.from_str('from os import path'),
+        ),
+        (
+            ImportImport.from_str('import pyramid'),
+        ),
+        (
+            FromImport.from_str('from aspy import refactor_imports'),
+        ),
+        (
+            FromImport.from_str('from .sort import sort'),
+        )
+    )
