@@ -11,8 +11,9 @@ class ImportType(object):
     BUILTIN = 'BUILTIN'
     THIRD_PARTY = 'THIRD_PARTY'
     APPLICATION = 'APPLICATION'
+    RELATIVE = "RELATIVE"
 
-    __all__ = (FUTURE, BUILTIN, THIRD_PARTY, APPLICATION)
+    __all__ = (FUTURE, BUILTIN, THIRD_PARTY, APPLICATION, RELATIVE)
 
 
 def _pythonpath_dirs():
@@ -104,7 +105,8 @@ def _get_module_info(module_name, application_directories):
 PACKAGES_PATH = '-packages' + os.sep
 
 
-def classify_import(module_name, application_directories=('.',)):
+def classify_import(module_name, application_directories=('.',),
+                    separate_relative=False):
     """Classifies an import by its package.
 
     Returns a value in ImportType.__all__
@@ -112,6 +114,8 @@ def classify_import(module_name, application_directories=('.',)):
     :param text module_name: The dotted notation of a module
     :param tuple application_directories: tuple of paths which are considered
         application roots.
+    :param bool separate_relative:
+        Split relative imports from application imports.
     """
     # Only really care about the first part of the path
     base_module_name = module_name.split('.')[0]
@@ -122,7 +126,10 @@ def classify_import(module_name, application_directories=('.',)):
     if base_module_name == '__future__':
         return ImportType.FUTURE
     elif base_module_name == '':
-        return ImportType.APPLICATION
+        if separate_relative:
+            return ImportType.RELATIVE
+        else:
+            return ImportType.APPLICATION
     # If imp tells us it is builtin, it is builtin
     elif module_info[2] == imp.C_BUILTIN:
         return ImportType.BUILTIN

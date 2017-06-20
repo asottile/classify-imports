@@ -16,7 +16,8 @@ CLS_TO_INDEX = {
 }
 
 
-def sort(imports, separate=True, import_before_from=True, **classify_kwargs):
+def sort(imports, separate=True, import_before_from=True,
+         separate_relative=False, **classify_kwargs):
     """Sort import objects into groups.
 
     :param list imports: FromImport / ImportImport objects
@@ -24,6 +25,9 @@ def sort(imports, separate=True, import_before_from=True, **classify_kwargs):
         of imports based on classification.
     :param bool import_before_from: Whether to sort `import ...` imports before
         `from ...` imports.
+    :param bool split_relative:
+        Whether to split `from .xx import xx` imports from other local imports
+        with an new line.
 
     For example:
         from os import path
@@ -62,7 +66,38 @@ def sort(imports, separate=True, import_before_from=True, **classify_kwargs):
         from os import path
         import pyramid
         import sys
+
+    Split relative example:
+
+        from os import path
+        from aspy import refactor_imports
+        from .sort import sort
+        import sys
+        import pyramid
+
+    sperate = True, import_before_from = True, separate_relative = False
+
+        import sys
+        from os import path
+
+        import pyramid
+
+        from .sort import sort
+        from aspy import refactor_imports
+
+    sperate = True, import_before_from = True, separate_relative = True
+
+        import sys
+        from os import path
+
+        import pyramid
+
+        from aspy import refactor_imports
+
+        from .sort import sort
     """
+    classify_kwargs["separate_relative"] = separate_relative
+
     if separate:
         def classify_func(obj):
             return classify_import(
