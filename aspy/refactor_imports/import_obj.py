@@ -41,6 +41,11 @@ class AbstractImportObj(object):
         return self._sort_key_type.from_python_ast(self.ast_obj)
 
     @cached_property
+    def is_explicit_relative(self):
+        """Returns True if this import is relative."""
+        return self.import_statement.module.startswith('.')
+
+    @cached_property
     def sort_key(self):
         return namedtuple_lower(self.import_statement) + self.import_statement
 

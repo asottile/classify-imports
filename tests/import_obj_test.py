@@ -282,3 +282,15 @@ def test_local_imports(input_str):
 )
 def test_import_obj_from_str(input_str, expected):
     assert import_obj_from_str(input_str) == expected
+
+
+@pytest.mark.parametrize(
+    ('input_str', 'expected'),
+    (
+        ('import bar', False),
+        ('from foo import bar', False),
+        ('from .foo import bar', True),
+    )
+)
+def test_is_explicit_relative(input_str, expected):
+    assert import_obj_from_str(input_str).is_explicit_relative is expected
