@@ -5,7 +5,7 @@ import sys
 import pytest
 
 
-@pytest.yield_fixture(autouse=True)
+@pytest.fixture(autouse=True)
 def no_warnings(recwarn):
     yield
     warnings = tuple(
@@ -21,13 +21,13 @@ def no_warnings(recwarn):
     assert len(warnings) == 0
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def in_tmpdir(tmpdir):
     with tmpdir.as_cwd():
         yield tmpdir
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def no_empty_path():
     # Some of our tests check things based on their pwd where things aren't
     # necessarily importable.  Let's make them not actually importable.
