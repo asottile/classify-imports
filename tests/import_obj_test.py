@@ -54,7 +54,7 @@ def test_import_import_sort_key_from_python_ast(input_str, expected):
     assert ImportImportSortKey.from_python_ast(ast_obj) == expected
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def import_import():
     yield ImportImport.from_str('import Foo as bar')
 
@@ -145,7 +145,7 @@ def test_import_import_to_text_normalizes_whitespace(import_str, expected):
     assert ImportImport.from_str(import_str).to_text() == expected
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def from_import():
     yield FromImport.from_str('from Foo import bar as baz')
 
