@@ -118,9 +118,9 @@ def classify_import(module_name, application_directories=('.',)):
     found, module_path, module_info = _get_module_info(
         base_module_name, application_directories,
     )
-    # Relative imports: `from .foo import bar`
     if base_module_name == '__future__':
         return ImportType.FUTURE
+    # Relative imports: `from .foo import bar`
     elif base_module_name == '':
         return ImportType.APPLICATION
     # If imp tells us it is builtin, it is builtin
