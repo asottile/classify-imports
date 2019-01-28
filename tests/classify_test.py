@@ -27,6 +27,16 @@ def test_classify_import(module, expected):
     assert ret is expected
 
 
+def test_true_namespace_package(tmpdir):
+    site_packages = tmpdir.join('site-packages')
+    site_packages.join('a').ensure_dir()
+    sys_path = [site_packages.strpath] + sys.path
+    with mock.patch.object(sys, 'path', sys_path):
+        # while this is a py3+ feature, aspy.refactor_imports happens to get
+        # this correct anyway!
+        assert classify_import('a') == ImportType.THIRD_PARTY
+
+
 @pytest.mark.xfail(
     os.name == 'nt',
     reason='Expected fail for no symlink support',

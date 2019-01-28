@@ -107,6 +107,8 @@ else:  # pragma: no cover (PY3+)
         spec = importlib.util.find_spec(module_name)
         if spec is None:
             return False, _find_local(module_name, application_dirs), False
+        elif spec.origin in {None, 'namespace'}:
+            return True, next(iter(spec.submodule_search_locations)), False
         # special case pypy3 bug(?)
         elif not os.path.exists(spec.origin):
             return True, '(builtin)', True
