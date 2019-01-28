@@ -1,3 +1,4 @@
+from setuptools import find_packages
 from setuptools import setup
 
 
@@ -5,7 +6,7 @@ setup(
     name='aspy.refactor_imports',
     description='Utilities for refactoring imports in python-like syntax.',
     url='https://github.com/asottile/aspy.refactor_imports',
-    version='1.0.0',
+    version='1.0.1',
 
     author='Anthony Sottile',
     author_email='asottile@umich.edu',
@@ -22,7 +23,6 @@ setup(
         'Programming Language :: Python :: Implementation :: PyPy',
     ],
 
-    packages=['aspy', 'aspy.refactor_imports'],
-    namespace_packages=['aspy'],
+    packages=find_packages(exclude=('tests*', 'testing*')),
     install_requires=['cached_property'],
 )
