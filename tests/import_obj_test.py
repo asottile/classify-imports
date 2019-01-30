@@ -6,7 +6,6 @@ import collections
 import re
 
 import pytest
-
 from aspy.refactor_imports.import_obj import FromImport
 from aspy.refactor_imports.import_obj import FromImportSortKey
 from aspy.refactor_imports.import_obj import import_obj_from_str
