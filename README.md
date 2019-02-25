@@ -1,17 +1,14 @@
-[![Build Status](https://travis-ci.org/asottile/aspy.refactor_imports.svg?branch=master)](https://travis-ci.org/asottile/aspy.refactor_imports)
-[![Coverage Status](https://img.shields.io/coveralls/asottile/aspy.refactor_imports.svg?branch=master)](https://coveralls.io/r/asottile/aspy.refactor_imports)
 [![Build Status](https://asottile.visualstudio.com/asottile/_apis/build/status/asottile.aspy.refactor_imports?branchName=master)](https://asottile.visualstudio.com/asottile/_build/latest?definitionId=5&branchName=master)
+[![Azure DevOps coverage](https://img.shields.io/azure-devops/coverage/asottile/asottile/5/master.svg)](https://dev.azure.com/asottile/asottile/_build/latest?definitionId=5&branchName=master)
 
 aspy.refactor_imports
-==========
+=====================
 
 Utilities for refactoring imports in python-like syntax.
-
 
 ## Installation
 
 `pip install aspy.refactor_imports`
-
 
 ## Examples
 
