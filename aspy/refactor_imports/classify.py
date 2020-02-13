@@ -121,7 +121,8 @@ else:  # pragma: no cover (PY3+)
 PACKAGES_PATH = '-packages' + os.sep
 
 
-def classify_import(module_name, application_directories=('.',)):
+def classify_import(module_name, application_directories=('.',),
+                    backports=None):
     """Classifies an import by its package.
 
     Returns a value in ImportType.__all__
@@ -129,6 +130,8 @@ def classify_import(module_name, application_directories=('.',)):
     :param text module_name: The dotted notation of a module
     :param tuple application_directories: tuple of paths which are considered
         application roots.
+    :param set backports: A set of first part of modules that should be
+        classified as BUILTIN.
     """
     # Only really care about the first part of the path
     base, _, _ = module_name.partition('.')
@@ -153,6 +156,7 @@ def classify_import(module_name, application_directories=('.',)):
             found and
             PACKAGES_PATH not in module_path and
             not _due_to_pythonpath(module_path)
+            or backports is not None and base in backports
     ):
         return ImportType.BUILTIN
     else:

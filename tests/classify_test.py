@@ -97,6 +97,11 @@ def test_empty_directory_is_not_package(in_tmpdir, no_empty_path):
     assert ret is ImportType.THIRD_PARTY
 
 
+def test_backport_is_builtin(in_tmpdir, no_empty_path):
+    ret = classify_import('backported', backports={'backported'})
+    assert ret is ImportType.BUILTIN
+
+
 def test_application_directories(in_tmpdir, no_empty_path):
     # Similar to @bukzor's testing setup
     in_tmpdir.join('tests/testing').ensure_dir().join('__init__.py').ensure()
