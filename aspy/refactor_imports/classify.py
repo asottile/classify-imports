@@ -1,6 +1,7 @@
 import importlib.util
 import os.path
 import sys
+import zipimport
 from typing import Set
 from typing import Tuple
 
@@ -79,6 +80,8 @@ def _get_module_info(
     elif spec.origin is None or spec.origin == 'namespace':
         assert spec.submodule_search_locations is not None
         return True, next(iter(spec.submodule_search_locations)), False
+    elif isinstance(spec.loader, zipimport.zipimporter):
+        return True, spec.origin, False
     # special case pypy3 bug(?)
     elif not os.path.exists(spec.origin):  # pragma: no cover
         return True, '(builtin)', True

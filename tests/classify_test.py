@@ -1,6 +1,7 @@
 import contextlib
 import os.path
 import sys
+import zipfile
 
 import mock
 import pytest
@@ -49,16 +50,21 @@ def test_symlink_path_different(in_tmpdir, no_empty_path):  # pragma: no cover
 
 
 @contextlib.contextmanager
-def in_sys_path_and_pythonpath(pth):
+def in_sys_path(pth):
     paths = [os.path.abspath(p) for p in pth.split(os.pathsep)]
 
     path_before = sys.path[:]
     sys.path[:] = paths + path_before
     try:
-        with mock.patch.dict(os.environ, {'PYTHONPATH': pth}):
-            yield
+        yield
     finally:
         sys.path[:] = path_before
+
+
+@contextlib.contextmanager
+def in_sys_path_and_pythonpath(pth):
+    with in_sys_path(pth), mock.patch.dict(os.environ, {'PYTHONPATH': pth}):
+        yield
 
 
 def test_classify_pythonpath_third_party(in_tmpdir):
@@ -77,6 +83,22 @@ def test_classify_pythonpath_multiple(in_tmpdir):
     in_tmpdir.join('ppth').ensure_dir().join('f.py').ensure()
     with in_sys_path_and_pythonpath(os.pathsep.join(('ppth', 'foo'))):
         assert classify_import('f') is ImportType.THIRD_PARTY
+
+
+def test_classify_pythonpath_zipimport(in_tmpdir):
+    path_zip = in_tmpdir.join('ppth').ensure_dir().join('fzip.zip')
+    with zipfile.ZipFile(str(path_zip), 'w') as fzip:
+        fzip.writestr('fzip.py', '')
+    with in_sys_path_and_pythonpath('ppth/fzip.zip'):
+        assert classify_import('fzip') is ImportType.THIRD_PARTY
+
+
+def test_classify_embedded_builtin(in_tmpdir):
+    path_zip = in_tmpdir.join('ppth').ensure_dir().join('fzip.zip')
+    with zipfile.ZipFile(str(path_zip), 'w') as fzip:
+        fzip.writestr('fzip.py', '')
+    with in_sys_path('ppth/fzip.zip'):
+        assert classify_import('fzip') is ImportType.BUILTIN
 
 
 def test_file_existing_is_application_level(in_tmpdir, no_empty_path):
