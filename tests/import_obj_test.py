@@ -1,8 +1,4 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 import ast
-import collections
 import re
 
 import pytest
@@ -11,14 +7,12 @@ from aspy.refactor_imports.import_obj import FromImportSortKey
 from aspy.refactor_imports.import_obj import import_obj_from_str
 from aspy.refactor_imports.import_obj import ImportImport
 from aspy.refactor_imports.import_obj import ImportImportSortKey
-from aspy.refactor_imports.import_obj import namedtuple_lower
+from aspy.refactor_imports.import_obj import tuple_lower
 
 
-def test_namedtuple_lower():
-    cls = collections.namedtuple('Foo', ['bar', 'baz'])
-    input_instance = cls('Bar', 'Baz')
-    ret = namedtuple_lower(input_instance)
-    assert ret == cls('bar', 'baz')
+def test_tuple_lower():
+    ret = tuple_lower(('Bar', 'Baz'))
+    assert ret == ('bar', 'baz')
 
 
 def to_ast(s):
@@ -114,7 +108,7 @@ def test_import_import_has_multiple_imports(input_str, expected):
                 ImportImport.from_str('import bar'),
             ],
         ),
-    )
+    ),
 )
 def test_import_import_split_imports(input_str, expected):
     assert ImportImport.from_str(input_str).split_imports() == expected
@@ -126,7 +120,7 @@ def test_import_import_split_imports(input_str, expected):
         'import foo\n',
         'import foo.bar\n',
         'import foo as bar\n',
-    )
+    ),
 )
 def test_import_import_to_text(import_str):
     assert ImportImport.from_str(import_str).to_text() == import_str
@@ -247,10 +241,17 @@ def test_from_import_repr(from_import):
     )
 
 
-def test_hashable():
+def test_from_import_hashable():
     my_set = set()
     my_set.add(FromImport.from_str('from foo import bar'))
     my_set.add(FromImport.from_str('from foo import bar'))
+    assert len(my_set) == 1
+
+
+def test_import_import_hashable():
+    my_set = set()
+    my_set.add(ImportImport.from_str('import foo'))
+    my_set.add(ImportImport.from_str('import foo'))
     assert len(my_set) == 1
 
 
@@ -261,7 +262,7 @@ def test_hashable():
         'from .foo import bar\n',
         'from .. import bar\n',
         'from ..foo import bar\n',
-    )
+    ),
 )
 def test_local_imports(input_str):
     assert FromImport.from_str(input_str).to_text() == input_str
@@ -289,7 +290,7 @@ def test_import_obj_from_str(input_str, expected):
         ('import bar', False),
         ('from foo import bar', False),
         ('from .foo import bar', True),
-    )
+    ),
 )
 def test_is_explicit_relative(input_str, expected):
     assert import_obj_from_str(input_str).is_explicit_relative is expected
