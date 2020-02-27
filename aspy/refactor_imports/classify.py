@@ -1,10 +1,11 @@
-from __future__ import unicode_literals
-
+import importlib.util
 import os.path
 import sys
+from typing import Set
+from typing import Tuple
 
 
-class ImportType(object):
+class ImportType:
     __slots__ = ()
 
     FUTURE = 'FUTURE'
@@ -15,7 +16,7 @@ class ImportType(object):
     __all__ = (FUTURE, BUILTIN, THIRD_PARTY, APPLICATION)
 
 
-def _pythonpath_dirs():
+def _pythonpath_dirs() -> Set[str]:
     if 'PYTHONPATH' not in os.environ:
         return set()
 
@@ -23,15 +24,15 @@ def _pythonpath_dirs():
     return {os.path.realpath(p) for p in splitpath} - {os.path.realpath('.')}
 
 
-def _due_to_pythonpath(module_path):
+def _due_to_pythonpath(module_path: str) -> bool:
     mod_dir, _ = os.path.split(os.path.realpath(module_path))
     return mod_dir in _pythonpath_dirs()
 
 
 def _module_path_is_local_and_is_not_symlinked(
-        module_path, application_directories,
-):
-    def _is_a_local_path(potential_path):
+        module_path: str, application_directories: Tuple[str, ...],
+) -> bool:
+    def _is_a_local_path(potential_path: str) -> bool:
         localpath = os.path.abspath(potential_path)
         abspath = os.path.abspath(module_path)
         realpath = os.path.realpath(module_path)
@@ -48,7 +49,10 @@ def _module_path_is_local_and_is_not_symlinked(
     return any(_is_a_local_path(path) for path in application_directories)
 
 
-def _find_local(module_name, application_directories):
+def _find_local(
+        module_name: str,
+        application_directories: Tuple[str, ...],
+) -> str:
     for local_path in application_directories:
         pkg_path = os.path.join(local_path, module_name)
         mod_path = os.path.join(local_path, module_name + '.py')
@@ -61,67 +65,36 @@ def _find_local(module_name, application_directories):
         return module_name + '.notlocal'
 
 
-if sys.version_info < (3, 5):  # pragma: no cover (PY2)
-    import imp
+def _get_module_info(
+        module_name: str,
+        application_dirs: Tuple[str, ...],
+) -> Tuple[bool, str, bool]:
+    if module_name in sys.builtin_module_names:
+        return True, '(builtin)', True
 
-    def _get_module_info(module_name, application_dirs):
-        """Attempt to get module info from the first module name.
-
-        1.) Attempt `imp.find_module`, this will fail if it is not importable
-            Since we're likely to be running in our own environment where
-            the thing we're statically analyzing isn't importable this is
-            really only likely to succeed for system packages
-
-        2.) Attempt to find it as a file from any of the application dirs
-            - Try `module_name` (maybe a package directory?)
-            - Try `module_name + '.py'` (maybe a python file?)
-            - Give up and assume it's importable as just `module_name`
-            - TODO: is it worth it to try for C extensions here? I think not
-                since C extensions should probably won't exist at a top level
-            - TODO: are there any other special cases to worry about?
-
-        :param text module_name: the first segment of a module name
-        """
-        if module_name in sys.builtin_module_names:
-            return True, '(builtin)', True
-
-        try:
-            fileobj, filename, _ = imp.find_module(module_name)
-        except ImportError:
-            # In the general case we probably can't import the modules because
-            # our environment will be isolated from theirs.
-            pass
-        else:
-            if fileobj:
-                fileobj.close()
-            return True, filename, False
-
+    spec = importlib.util.find_spec(module_name)
+    if spec is None:
         return False, _find_local(module_name, application_dirs), False
-else:  # pragma: no cover (PY3+)
-    import importlib.util
-
-    def _get_module_info(module_name, application_dirs):
-        if module_name in sys.builtin_module_names:
-            return True, '(builtin)', True
-
-        spec = importlib.util.find_spec(module_name)
-        if spec is None:
-            return False, _find_local(module_name, application_dirs), False
-        elif spec.origin in {None, 'namespace'}:
-            return True, next(iter(spec.submodule_search_locations)), False
-        # special case pypy3 bug(?)
-        elif not os.path.exists(spec.origin):
-            return True, '(builtin)', True
-        elif os.path.split(spec.origin)[1] == '__init__.py':
-            return True, os.path.dirname(spec.origin), False
-        else:
-            return True, spec.origin, False
+    # py36: None, py37+: 'namespace'
+    elif spec.origin is None or spec.origin == 'namespace':
+        assert spec.submodule_search_locations is not None
+        return True, next(iter(spec.submodule_search_locations)), False
+    # special case pypy3 bug(?)
+    elif not os.path.exists(spec.origin):  # pragma: no cover
+        return True, '(builtin)', True
+    elif os.path.split(spec.origin)[1] == '__init__.py':
+        return True, os.path.dirname(spec.origin), False
+    else:
+        return True, spec.origin, False
 
 
 PACKAGES_PATH = '-packages' + os.sep
 
 
-def classify_import(module_name, application_directories=('.',)):
+def classify_import(
+        module_name: str,
+        application_directories: Tuple[str, ...] = ('.',),
+) -> str:
     """Classifies an import by its package.
 
     Returns a value in ImportType.__all__

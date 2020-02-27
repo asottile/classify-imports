@@ -20,9 +20,9 @@ Utilities for refactoring imports in python-like syntax.
 >>> from aspy.refactor_imports.import_obj import FromImport
 >>> from aspy.refactor_imports.import_obj import ImportImport
 >>> FromImport.from_str('from foo import bar').to_text()
-u'from foo import bar\n'
+'from foo import bar\n'
 >>> ImportImport.from_str('import bar as baz').to_text()
-u'import bar as baz\n'
+'import bar as baz\n'
 ```
 
 #### Splitting an import object
@@ -31,7 +31,7 @@ u'import bar as baz\n'
 >>> from aspy.refactor_imports.import_obj import ImportImport
 >>> obj = ImportImport.from_str('import foo, bar, baz')
 >>> [i.to_text() for i in obj.split_imports()]
-[u'import foo\n', u'import bar\n', u'import baz\n']
+['import foo\n', 'import bar\n', 'import baz\n']
 ```
 
 #### Sorting import objects
@@ -47,11 +47,11 @@ u'import bar as baz\n'
     FromImport.from_str('from a import bar as baz'),
 ])
 >>> pprint.pprint([i.to_text() for i in objs])
-[u'from a import bar\n',
- u'from a import bar as baz\n',
- u'from a import bar as buz\n',
- u'from a import foo\n',
- u'from a.b import baz\n']
+['from a import bar\n',
+ 'from a import bar as baz\n',
+ 'from a import bar as buz\n',
+ 'from a import foo\n',
+ 'from a.b import baz\n']
 ```
 
 ```python
@@ -72,12 +72,12 @@ u'import bar as baz\n'
 ))
 >>> pprint.pprint(partitioned)
 (
-    (ImportImport.from_str(u'import sys\n'),),
+    (ImportImport.from_str('import sys\n'),),
     (
-        ImportImport.from_str(u'import cached_property\n'),
-        FromImport.from_str(u'from pyramid.view import view_config\n'),
+        ImportImport.from_str('import cached_property\n'),
+        FromImport.from_str('from pyramid.view import view_config\n'),
     ),
-    (FromImport.from_str(u'from aspy import refactor_imports\n'),),
+    (FromImport.from_str('from aspy import refactor_imports\n'),),
 )
 
 ```
@@ -89,15 +89,15 @@ u'import bar as baz\n'
 ```python
 >>> from aspy.refactor_imports.classify import classify_import
 >>> classify_import('__future__')
-u'FUTURE'
+'FUTURE'
 >>> classify_import('aspy')
-u'APPLICATION'
+'APPLICATION'
 >>> classify_import('pyramid')
-u'THIRD_PARTY'
+'THIRD_PARTY'
 >>> classify_import('os')
-u'BUILTIN'
+'BUILTIN'
 >>> classify_import('os.path')
-u'BUILTIN'
+'BUILTIN'
 ```
 
 #### Also as convenient constants
@@ -114,5 +114,5 @@ class ImportType(object):
     THIRD_PARTY = 'THIRD_PARTY'
     APPLICATION = 'APPLICATION'
 
-    __all__ = [FUTURE, BUILTIN, THIRD_PARTY, APPLICATION]
+    __all__ = (FUTURE, BUILTIN, THIRD_PARTY, APPLICATION)
 ```
