@@ -1,5 +1,4 @@
+covdefaults
 coverage
-mock
 pre-commit
 pytest
-setuptools>31

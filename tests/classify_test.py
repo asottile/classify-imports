@@ -2,8 +2,8 @@ import contextlib
 import os.path
 import sys
 import zipfile
+from unittest import mock
 
-import mock
 import pytest
 from aspy.refactor_imports.classify import classify_import
 from aspy.refactor_imports.classify import ImportType
