@@ -128,3 +128,22 @@ def test_application_directories(in_tmpdir, no_empty_path):
     # Should be application with extra directories
     ret = classify_import('testing', application_directories=('.', 'tests'))
     assert ret is ImportType.APPLICATION
+
+
+def test_unclassifiable_application_modules():
+    # Should be classified 3rd party without argument
+    ret = classify_import('c_module')
+    assert ret is ImportType.THIRD_PARTY
+    # Should be classified application with the override
+    ret = classify_import(
+        'c_module', unclassifiable_application_modules=('c_module',),
+    )
+    assert ret is ImportType.APPLICATION
+
+
+def test_unclassifiable_application_modules_ignores_future():
+    # Trying to force __future__ to be APPLICATION shouldn't have any effect
+    ret = classify_import(
+        '__future__', unclassifiable_application_modules=('__future__',),
+    )
+    assert ret is ImportType.FUTURE

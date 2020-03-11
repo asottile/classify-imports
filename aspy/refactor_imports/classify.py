@@ -2,6 +2,7 @@ import importlib.util
 import os.path
 import sys
 import zipimport
+from typing import Container
 from typing import Set
 from typing import Tuple
 
@@ -97,6 +98,7 @@ PACKAGES_PATH = '-packages' + os.sep
 def classify_import(
         module_name: str,
         application_directories: Tuple[str, ...] = ('.',),
+        unclassifiable_application_modules: Container[str] = (),
 ) -> str:
     """Classifies an import by its package.
 
@@ -105,6 +107,10 @@ def classify_import(
     :param text module_name: The dotted notation of a module
     :param tuple application_directories: tuple of paths which are considered
         application roots.
+    :param tuple unclassifiable_application_modules: tuple of module names
+        that are considered application modules.  this setting is intended
+        to be used for things like C modules which may not always appear on
+        the filesystem.
     """
     # Only really care about the first part of the path
     base, _, _ = module_name.partition('.')
@@ -113,6 +119,8 @@ def classify_import(
     )
     if base == '__future__':
         return ImportType.FUTURE
+    elif base in unclassifiable_application_modules:
+        return ImportType.APPLICATION
     # Relative imports: `from .foo import bar`
     elif base == '':
         return ImportType.APPLICATION
