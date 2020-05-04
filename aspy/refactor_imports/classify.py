@@ -31,6 +31,24 @@ def _due_to_pythonpath(module_path: str) -> bool:
     return mod_dir in _pythonpath_dirs()
 
 
+def _samedrive(path1: str, path2: str) -> bool:
+    drive1, _ = os.path.splitdrive(path1)
+    drive2, _ = os.path.splitdrive(path2)
+    return drive1.upper() == drive2.upper()
+
+
+def _normcase_equal(path1: str, path2: str) -> bool:
+    return os.path.normcase(path1) == os.path.normcase(path2)
+
+
+def _has_path_prefix(path: str, *, prefix: str) -> bool:
+    # Both paths are assumed to be absolute.
+    return (
+        _samedrive(path, prefix) and
+        _normcase_equal(prefix, os.path.commonpath((path, prefix)))
+    )
+
+
 def _module_path_is_local_and_is_not_symlinked(
         module_path: str, application_directories: Tuple[str, ...],
 ) -> bool:
@@ -39,12 +57,12 @@ def _module_path_is_local_and_is_not_symlinked(
         abspath = os.path.abspath(module_path)
         realpath = os.path.realpath(module_path)
         return (
-            abspath.startswith(localpath) and
+            _has_path_prefix(abspath, prefix=localpath) and
             # It's possible (and surprisingly likely) that the consumer has a
             # virtualenv inside the project directory.  We'd like to still
             # consider things in the virtualenv as third party.
             os.sep not in abspath[len(localpath) + 1:] and
-            abspath == realpath and
+            _normcase_equal(abspath, realpath) and
             os.path.exists(realpath)
         )
 

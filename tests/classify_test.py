@@ -130,6 +130,18 @@ def test_application_directories(in_tmpdir, no_empty_path):
     assert ret is ImportType.APPLICATION
 
 
+@pytest.mark.xfail(
+    sys.platform != 'win32',
+    reason='Expected fail due to case-sensitive os.path.commonpath',
+)
+def test_application_directory_case(in_tmpdir, no_empty_path):
+    srcdir = in_tmpdir.join('SRC').ensure_dir()
+    srcdir.join('my_package').ensure_dir().join('__init__.py').ensure()
+    with in_sys_path('src'):
+        ret = classify_import('my_package', application_directories=('SRC',))
+    assert ret is ImportType.APPLICATION
+
+
 def test_unclassifiable_application_modules():
     # Should be classified 3rd party without argument
     ret = classify_import('c_module')
