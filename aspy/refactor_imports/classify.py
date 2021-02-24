@@ -92,7 +92,10 @@ def _get_module_info(
     if module_name in sys.builtin_module_names:
         return True, '(builtin)', True
 
-    spec = importlib.util.find_spec(module_name)
+    try:
+        spec = importlib.util.find_spec(module_name)
+    except ValueError:  # spec is None
+        spec = None
     if spec is None:
         return False, _find_local(module_name, application_dirs), False
     # py36: None, py37+: 'namespace'
@@ -137,6 +140,8 @@ def classify_import(
     )
     if base == '__future__':
         return ImportType.FUTURE
+    elif base == '__main__':
+        return ImportType.APPLICATION
     elif base in unclassifiable_application_modules:
         return ImportType.APPLICATION
     # Relative imports: `from .foo import bar`

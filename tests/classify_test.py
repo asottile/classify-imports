@@ -1,5 +1,6 @@
 import contextlib
 import os.path
+import subprocess
 import sys
 import zipfile
 from unittest import mock
@@ -20,11 +21,28 @@ from aspy.refactor_imports.classify import ImportType
         ('pyramid', ImportType.THIRD_PARTY),
         ('aspy.refactor_imports', ImportType.APPLICATION),
         ('.main_test', ImportType.APPLICATION),
+        ('__main__', ImportType.APPLICATION),
     ),
 )
 def test_classify_import(module, expected):
     ret = classify_import(module)
     assert ret is expected
+
+
+def test_spec_is_none():
+    """for __main__ in a subprocess, spec is None and raises an error"""
+    prog = '''\
+import __main__
+from aspy.refactor_imports.classify import classify_import, ImportType
+assert __main__.__spec__ is None, __main__.__spec__
+tp = classify_import('__main__')
+assert tp == ImportType.APPLICATION, tp
+'''
+    subprocess.check_call((sys.executable, '-c', prog))
+
+    # simulate this situation for coverage
+    with mock.patch.object(sys.modules['__main__'], '__spec__', None):
+        assert classify_import('__main__') == ImportType.APPLICATION
 
 
 def test_true_namespace_package(tmpdir):
