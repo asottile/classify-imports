@@ -55,11 +55,11 @@ def test_true_namespace_package(tmpdir):
         assert classify_import('a') == ImportType.THIRD_PARTY
 
 
-@pytest.mark.xfail(
-    os.name == 'nt',
+@pytest.mark.xfail(  # pragma: win32 no cover
+    sys.platform == 'win32',
     reason='Expected fail for no symlink support',
 )
-def test_symlink_path_different(in_tmpdir, no_empty_path):  # pragma: no cover
+def test_symlink_path_different(in_tmpdir, no_empty_path):
     # symlink a file, these are likely to not be application files
     in_tmpdir.join('dest_file.py').ensure()
     in_tmpdir.join('src_file.py').mksymlinkto('dest-file.py')
@@ -148,10 +148,6 @@ def test_application_directories(in_tmpdir, no_empty_path):
     assert ret is ImportType.APPLICATION
 
 
-@pytest.mark.xfail(
-    sys.platform != 'win32',
-    reason='Expected fail due to case-sensitive os.path.commonpath',
-)
 def test_application_directory_case(in_tmpdir, no_empty_path):
     srcdir = in_tmpdir.join('SRC').ensure_dir()
     srcdir.join('my_package').ensure_dir().join('__init__.py').ensure()
