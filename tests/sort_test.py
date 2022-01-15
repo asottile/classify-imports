@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from aspy.refactor_imports.import_obj import FromImport
 from aspy.refactor_imports.import_obj import ImportImport
 from aspy.refactor_imports.sort import sort

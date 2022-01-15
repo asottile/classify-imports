@@ -1,9 +1,8 @@
+from __future__ import annotations
+
 import collections
 from typing import Any
-from typing import Dict
-from typing import List
 from typing import Sequence
-from typing import Tuple
 
 from aspy.refactor_imports.classify import classify_import
 from aspy.refactor_imports.classify import ImportType
@@ -21,7 +20,7 @@ def sort(
         separate: bool = True,
         import_before_from: bool = True,
         **kwargs: Any,
-) -> Tuple[Tuple[AbstractImportObj, ...], ...]:
+) -> tuple[tuple[AbstractImportObj, ...], ...]:
     """Sort import objects into groups.
 
     :param list imports: FromImport / ImportImport objects
@@ -71,7 +70,7 @@ def sort(
     if separate:
         def classify_func(obj: AbstractImportObj) -> str:
             return classify_import(obj.import_statement.module, **kwargs)
-        types: Tuple[str, ...] = ImportType.__all__
+        types: tuple[str, ...] = ImportType.__all__
     else:
         # A little cheaty, this allows future imports to sort before others
         def classify_func(obj: AbstractImportObj) -> str:
@@ -83,14 +82,14 @@ def sort(
         types = (ImportType.FUTURE, '(not future)')
 
     if import_before_from:
-        def sort_within(obj: AbstractImportObj) -> Tuple[str, ...]:
+        def sort_within(obj: AbstractImportObj) -> tuple[str, ...]:
             return (CLS_TO_INDEX[type(obj)],) + obj.sort_key
     else:
-        def sort_within(obj: AbstractImportObj) -> Tuple[str, ...]:
+        def sort_within(obj: AbstractImportObj) -> tuple[str, ...]:
             return tuple(obj.sort_key)
 
     # Partition the imports
-    imports_partitioned: Dict[str, List[AbstractImportObj]]
+    imports_partitioned: dict[str, list[AbstractImportObj]]
     imports_partitioned = collections.defaultdict(list)
     for import_obj in imports:
         imports_partitioned[classify_func(import_obj)].append(import_obj)

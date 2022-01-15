@@ -1,10 +1,10 @@
+from __future__ import annotations
+
 import importlib.util
 import os.path
 import sys
 import zipimport
 from typing import Container
-from typing import Set
-from typing import Tuple
 
 
 class ImportType:
@@ -18,7 +18,7 @@ class ImportType:
     __all__ = (FUTURE, BUILTIN, THIRD_PARTY, APPLICATION)
 
 
-def _pythonpath_dirs() -> Set[str]:
+def _pythonpath_dirs() -> set[str]:
     if 'PYTHONPATH' not in os.environ:
         return set()
 
@@ -50,7 +50,7 @@ def _has_path_prefix(path: str, *, prefix: str) -> bool:
 
 
 def _module_path_is_local_and_is_not_symlinked(
-        module_path: str, application_directories: Tuple[str, ...],
+        module_path: str, application_directories: tuple[str, ...],
 ) -> bool:
     def _is_a_local_path(potential_path: str) -> bool:
         localpath = os.path.abspath(potential_path)
@@ -71,7 +71,7 @@ def _module_path_is_local_and_is_not_symlinked(
 
 def _find_local(
         module_name: str,
-        application_directories: Tuple[str, ...],
+        application_directories: tuple[str, ...],
 ) -> str:
     for local_path in application_directories:
         pkg_path = os.path.join(local_path, module_name)
@@ -87,8 +87,8 @@ def _find_local(
 
 def _get_module_info(
         module_name: str,
-        application_dirs: Tuple[str, ...],
-) -> Tuple[bool, str, bool]:
+        application_dirs: tuple[str, ...],
+) -> tuple[bool, str, bool]:
     if module_name in sys.builtin_module_names:
         return True, '(builtin)', True
 
@@ -98,15 +98,12 @@ def _get_module_info(
         spec = None
     if spec is None:
         return False, _find_local(module_name, application_dirs), False
-    # py36: None, py37+: 'namespace'
-    elif spec.origin is None or spec.origin == 'namespace':
+    # namespace packages
+    elif spec.origin is None:
         assert spec.submodule_search_locations is not None
         return True, next(iter(spec.submodule_search_locations)), False
     elif isinstance(spec.loader, zipimport.zipimporter):
         return True, spec.origin, False
-    # special case pypy3 bug(?)
-    elif not os.path.exists(spec.origin):  # pragma: no cover
-        return True, '(builtin)', True
     elif os.path.split(spec.origin)[1] == '__init__.py':
         return True, os.path.dirname(spec.origin), False
     else:
@@ -118,7 +115,7 @@ PACKAGES_PATH = '-packages' + os.sep
 
 def classify_import(
         module_name: str,
-        application_directories: Tuple[str, ...] = ('.',),
+        application_directories: tuple[str, ...] = ('.',),
         unclassifiable_application_modules: Container[str] = (),
 ) -> str:
     """Classifies an import by its package.
