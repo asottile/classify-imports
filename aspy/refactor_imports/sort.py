@@ -69,12 +69,12 @@ def sort(
     """
     if separate:
         def classify_func(obj: AbstractImportObj) -> str:
-            return classify_import(obj.import_statement.module, **kwargs)
+            return classify_import(obj, **kwargs)
         types: tuple[str, ...] = ImportType.__all__
     else:
         # A little cheaty, this allows future imports to sort before others
         def classify_func(obj: AbstractImportObj) -> str:
-            tp = classify_import(obj.import_statement.module, **kwargs)
+            tp = classify_import(obj, **kwargs)
             if tp == ImportType.FUTURE:
                 return ImportType.FUTURE
             else:

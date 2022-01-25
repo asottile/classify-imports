@@ -88,16 +88,20 @@ Utilities for refactoring imports in python-like syntax.
 #### Classify a module
 
 ```python
+>>> from aspy.refactor_imports.import_obj import FromImport
+>>> from aspy.refactor_imports.import_obj import ImportImport
 >>> from aspy.refactor_imports.classify import classify_import
->>> classify_import('__future__')
+>>> classify_import(FromImport.from_str('from __future__ import annotations'))
 'FUTURE'
->>> classify_import('aspy')
-'APPLICATION'
->>> classify_import('pyramid')
-'THIRD_PARTY'
->>> classify_import('os')
+>>> classify_import(ImportImport.from_str('import __future__'))
 'BUILTIN'
->>> classify_import('os.path')
+>>> classify_import(ImportImport.from_str('import aspy'))
+'APPLICATION'
+>>> classify_import(ImportImport.from_str('import pyramid'))
+'THIRD_PARTY'
+>>> classify_import(ImportImport.from_str('import os'))
+'BUILTIN'
+>>> classify_import(FromImport.from_str('from os.path import basename'))
 'BUILTIN'
 ```
 
@@ -107,7 +111,7 @@ Utilities for refactoring imports in python-like syntax.
 ## From aspy.refactor_imports.classify
 
 
-class ImportType(object):
+class ImportType:
     __slots__ = ()
 
     FUTURE = 'FUTURE'

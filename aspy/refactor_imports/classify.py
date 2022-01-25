@@ -6,6 +6,9 @@ import sys
 import zipimport
 from typing import Container
 
+from aspy.refactor_imports.import_obj import AbstractImportObj
+from aspy.refactor_imports.import_obj import FromImport
+
 
 class ImportType:
     __slots__ = ()
@@ -114,7 +117,7 @@ PACKAGES_PATH = '-packages' + os.sep
 
 
 def classify_import(
-        module_name: str,
+        import_obj: AbstractImportObj,
         application_directories: tuple[str, ...] = ('.',),
         unclassifiable_application_modules: Container[str] = (),
 ) -> str:
@@ -131,12 +134,15 @@ def classify_import(
         the filesystem.
     """
     # Only really care about the first part of the path
-    base, _, _ = module_name.partition('.')
+    base, _, _ = import_obj.import_statement.module.partition('.')
     found, module_path, is_builtin = _get_module_info(
         base, application_directories,
     )
     if base == '__future__':
-        return ImportType.FUTURE
+        if isinstance(import_obj, FromImport):
+            return ImportType.FUTURE
+        else:
+            return ImportType.BUILTIN
     elif base == '__main__':
         return ImportType.APPLICATION
     elif base in unclassifiable_application_modules:
