@@ -84,6 +84,19 @@ def test_future_separate_block_non_separate():
     )
 
 
+def test_future_from_always_first():
+    ret = sort(
+        (
+            FromImport.from_str('from __future__ import absolute_import'),
+            ImportImport.from_str('import __future__'),
+        ),
+    )
+    assert ret == (
+        (FromImport.from_str('from __future__ import absolute_import'),),
+        (ImportImport.from_str('import __future__'),),
+    )
+
+
 def test_passes_through_kwargs_to_classify(in_tmpdir, no_empty_path):
     # Make a module
     in_tmpdir.join('my_module.py').ensure()
