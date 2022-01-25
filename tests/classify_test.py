@@ -152,6 +152,9 @@ def test_application_directories(in_tmpdir, no_empty_path):
 
 def test_application_directory_case(in_tmpdir, no_empty_path):
     srcdir = in_tmpdir.join('SRC').ensure_dir()
+    if in_tmpdir.join('src').exists():
+        raise pytest.skip('requires case sensitive filesystem')
+
     srcdir.join('my_package').ensure_dir().join('__init__.py').ensure()
     with in_sys_path('src'):
         ret = classify_import('my_package', application_directories=('SRC',))
