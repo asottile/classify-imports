@@ -24,6 +24,10 @@ from aspy.refactor_imports.classify import ImportType
         ('aspy.refactor_imports', ImportType.APPLICATION),
         ('.main_test', ImportType.APPLICATION),
         ('__main__', ImportType.APPLICATION),
+        pytest.param(
+            'distutils', ImportType.THIRD_PARTY,
+            id='force setuptools-distutils detection',
+        ),
     ),
 )
 def test_classify_import(module, expected):

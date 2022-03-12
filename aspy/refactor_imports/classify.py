@@ -139,15 +139,18 @@ def classify_import(
         return ImportType.FUTURE
     elif base == '__main__':
         return ImportType.APPLICATION
+    # force distutils to be "third party" after being gobbled by setuptools
+    elif base == 'distutils':
+        return ImportType.THIRD_PARTY
     elif base in unclassifiable_application_modules:
         return ImportType.APPLICATION
-    # Relative imports: `from .foo import bar`
+    # relative imports: `from .foo import bar`
     elif base == '':
         return ImportType.APPLICATION
-    # If imp tells us it is builtin, it is builtin
+    # if the import system tells us it is builtin, it is builtin
     elif is_builtin:
         return ImportType.BUILTIN
-    # If the module path exists in the project directories
+    # if the module path exists in the project directories
     elif _module_path_is_local_and_is_not_symlinked(
             module_path, application_directories,
     ):
