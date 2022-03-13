@@ -1,11 +1,15 @@
 from __future__ import annotations
 
 import ast
+import sys
 from typing import NamedTuple
 from typing import TypeVar
 from typing import Union
 
-from cached_property import cached_property
+if sys.version_info < (3, 8):  # pragma: <3.8 cover
+    from cached_property import cached_property
+else:  # pragma: >=3.8 cover
+    from functools import cached_property
 
 T = TypeVar('T')
 
