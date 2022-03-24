@@ -1,6 +1,6 @@
-[![Build Status](https://asottile.visualstudio.com/asottile/_apis/build/status/asottile.aspy.refactor_imports?branchName=master)](https://asottile.visualstudio.com/asottile/_build/latest?definitionId=5&branchName=master)
-[![Azure DevOps coverage](https://img.shields.io/azure-devops/coverage/asottile/asottile/5/master.svg)](https://dev.azure.com/asottile/asottile/_build/latest?definitionId=5&branchName=master)
-[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/asottile/aspy.refactor_imports/master.svg)](https://results.pre-commit.ci/latest/github/asottile/aspy.refactor_imports/master)
+[![Build Status](https://asottile.visualstudio.com/asottile/_apis/build/status/asottile.aspy.refactor_imports?branchName=main)](https://asottile.visualstudio.com/asottile/_build/latest?definitionId=5&branchName=main)
+[![Azure DevOps coverage](https://img.shields.io/azure-devops/coverage/asottile/asottile/5/main.svg)](https://dev.azure.com/asottile/asottile/_build/latest?definitionId=5&branchName=main)
+[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/asottile/aspy.refactor_imports/main.svg)](https://results.pre-commit.ci/latest/github/asottile/aspy.refactor_imports/main)
 
 aspy.refactor_imports
 =====================
