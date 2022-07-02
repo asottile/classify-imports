@@ -12,12 +12,7 @@ from typing import Generator
 from typing import Iterable
 from typing import NamedTuple
 
-
-Classified = enum.IntEnum(
-    'Classified',
-    'FUTURE BUILTIN THIRD_PARTY APPLICATION',
-    start=0,
-)
+Classified = enum.Enum('Classified', 'FUTURE BUILTIN THIRD_PARTY APPLICATION')
 
 
 def _pythonpath_dirs() -> set[str]:
