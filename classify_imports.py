@@ -12,6 +12,11 @@ from typing import Generator
 from typing import Iterable
 from typing import NamedTuple
 
+if sys.version_info >= (3, 8):  # pragma: >=3.8 cover
+    from functools import cached_property
+else:  # pragma: <3.8 cover
+    cached_property = property
+
 Classified = enum.Enum('Classified', 'FUTURE BUILTIN THIRD_PARTY APPLICATION')
 
 
@@ -181,7 +186,7 @@ class Import:
     def module_base(self) -> str:
         return self.module.split('.')[0]
 
-    @property
+    @cached_property
     def key(self) -> ImportKey:
         alias = self.node.names[0]
         return ImportKey(alias.name, alias.asname or '')
@@ -236,7 +241,7 @@ class ImportFrom:
     def module_base(self) -> str:
         return self.module.split('.')[0]
 
-    @property
+    @cached_property
     def key(self) -> ImportFromKey:
         alias = self.node.names[0]
         return ImportFromKey(self.module, alias.name, alias.asname or '')
