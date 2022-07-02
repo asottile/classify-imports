@@ -1,125 +1,65 @@
-# RENAMED
+[![Build Status](https://asottile.visualstudio.com/asottile/_apis/build/status/asottile.classify-imports?branchName=main)](https://asottile.visualstudio.com/asottile/_build/latest?definitionId=74&branchName=main)
+[![Azure DevOps coverage](https://img.shields.io/azure-devops/coverage/asottile/asottile/74/main.svg)](https://dev.azure.com/asottile/asottile/_build/latest?definitionId=74&branchName=main)
+[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/asottile/classify-imports/main.svg)](https://results.pre-commit.ci/latest/github/asottile/classify-imports/main)
 
-this library has been rewritten and renamed to `classify-imports` for version 4
-
----
-
-[![Build Status](https://asottile.visualstudio.com/asottile/_apis/build/status/asottile.aspy.refactor_imports?branchName=main)](https://asottile.visualstudio.com/asottile/_build/latest?definitionId=5&branchName=main)
-[![Azure DevOps coverage](https://img.shields.io/azure-devops/coverage/asottile/asottile/5/main.svg)](https://dev.azure.com/asottile/asottile/_build/latest?definitionId=5&branchName=main)
-[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/asottile/aspy.refactor_imports/main.svg)](https://results.pre-commit.ci/latest/github/asottile/aspy.refactor_imports/main)
-
-aspy.refactor_imports
-=====================
+classify-imports
+================
 
 Utilities for refactoring imports in python-like syntax.
 
-## Installation
+## installation
 
-`pip install aspy.refactor_imports`
+`pip install classify-imports`
 
-## Examples
+## examples
 
-### aspy.refactor_imports.import_obj
-
-#### Constructing an import object
+### splitting an import object
 
 ```python
->>> from aspy.refactor_imports.import_obj import FromImport
->>> from aspy.refactor_imports.import_obj import ImportImport
->>> FromImport.from_str('from foo import bar').to_text()
-'from foo import bar\n'
->>> ImportImport.from_str('import bar as baz').to_text()
-'import bar as baz\n'
-```
-
-#### Splitting an import object
-
-```python
->>> from aspy.refactor_imports.import_obj import ImportImport
->>> obj = ImportImport.from_str('import foo, bar, baz')
->>> [i.to_text() for i in obj.split_imports()]
+>>> from classify_imports import import_obj_from_str
+>>> obj = import_obj_from_str('import foo, bar, baz')
+>>> [str(i) for i in obj.split()]
 ['import foo\n', 'import bar\n', 'import baz\n']
 ```
 
-#### Sorting import objects
-
-```python
->>> import pprint
->>> from aspy.refactor_imports.import_obj import FromImport
->>> objs = sorted([
-    FromImport.from_str('from a import foo'),
-    FromImport.from_str('from a.b import baz'),
-    FromImport.from_str('from a import bar'),
-    FromImport.from_str('from a import bar as buz'),
-    FromImport.from_str('from a import bar as baz'),
-])
->>> pprint.pprint([i.to_text() for i in objs])
-['from a import bar\n',
- 'from a import bar as baz\n',
- 'from a import bar as buz\n',
- 'from a import foo\n',
- 'from a.b import baz\n']
-```
+### sorting import objects
 
 ```python
 # Or to partition into blocks (even with mixed imports)
->>> import buck.pprint as pprint
->>> from aspy.refactor_imports.import_obj import FromImport
->>> from aspy.refactor_imports.import_obj import ImportImport
->>> from aspy.refactor_imports.sort import sort
+>>> import pprint
+>>> from classify_imports import import_obj_from_str, sort
 >>> partitioned = sort(
     [
-        FromImport.from_str('from aspy import refactor_imports'),
-        ImportImport.from_str('import sys'),
-        FromImport.from_str('from pyramid.view import view_config'),
-        ImportImport.from_str('import cached_property'),
+        import_obj_from_str('from classify_imports import sort'),
+        import_obj_from_str('import sys'),
+        import_obj_from_str('from pyramid.view import view_config'),
+        import_obj_from_str('import cached_property'),
     ],
-    separate=True,
-    import_before_from=True,
-))
+)
 >>> pprint.pprint(partitioned)
 (
-    (ImportImport.from_str('import sys\n'),),
+    (import_obj_from_str('import sys\n'),),
     (
-        ImportImport.from_str('import cached_property\n'),
-        FromImport.from_str('from pyramid.view import view_config\n'),
+        import_obj_from_str('import cached_property\n'),
+        import_obj_from_str('from pyramid.view import view_config\n'),
     ),
-    (FromImport.from_str('from aspy import refactor_imports\n'),),
+    (import_obj_from_str('from classify_imports import sort\n'),),
 )
 
 ```
 
-### aspy.refactor_imports.classify
-
-#### Classify a module
+### classify a module
 
 ```python
->>> from aspy.refactor_imports.classify import classify_import
->>> classify_import('__future__')
-'FUTURE'
->>> classify_import('aspy')
-'APPLICATION'
->>> classify_import('pyramid')
-'THIRD_PARTY'
->>> classify_import('os')
-'BUILTIN'
->>> classify_import('os.path')
-'BUILTIN'
-```
-
-#### Also as convenient constants
-
-```python
-## From aspy.refactor_imports.classify
-
-
-class ImportType(object):
-    __slots__ = ()
-
-    FUTURE = 'FUTURE'
-    BUILTIN = 'BUILTIN'
-    THIRD_PARTY = 'THIRD_PARTY'
-    APPLICATION = 'APPLICATION'
-
-    __all__ = (FUTURE, BUILTIN, THIRD_PARTY, APPLICATION)
+>>> from classify_imports import classify_base, import_obj_from_str
+>>> classify_base('__future__')
+<Classified.FUTURE: 0>
+>>> classify_base('classify_imports')
+<Classified.APPLICATION: 3>
+>>> classify_base('pyramid')
+<Classified.THIRD_PARTY: 2>
+>>> classify_base('os')
+<Classified.BUILTIN: 1>
+>>> classify_base(import_obj_from_str('import os.path').module_base)
+<Classified.BUILTIN: 1>
 ```
