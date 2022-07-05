@@ -9,7 +9,6 @@ import zipfile
 from unittest import mock
 
 import pytest
-
 from classify_imports import Classified
 from classify_imports import classify_base
 from classify_imports import import_obj_from_str
