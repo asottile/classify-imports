@@ -17,12 +17,30 @@ from classify_imports import ImportKey
 from classify_imports import Settings
 from classify_imports import sort
 
-classify_base_uncached = classify_base.__wrapped__
+
+@pytest.fixture(autouse=True)
+def no_warnings(recwarn):
+    yield
+    assert len(recwarn) == 0
 
 
 @pytest.fixture(autouse=True)
-def reset_classify_cache():
+def no_empty_path():
+    # Some of our tests check things based on their pwd where things aren't
+    # necessarily importable.  Let's make them not actually importable.
+    with contextlib.suppress(ValueError):
+        sys.path.remove('')
+
+
+@pytest.fixture(autouse=True)
+def reset_caches():
     classify_base.cache_clear()
+
+
+@pytest.fixture
+def in_tmpdir(tmpdir):
+    with tmpdir.as_cwd():
+        yield tmpdir
 
 
 @pytest.mark.parametrize(
@@ -44,8 +62,8 @@ def reset_classify_cache():
         ),
     ),
 )
-def test_classify_base_uncached(module, expected):
-    ret = classify_base_uncached(module)
+def test_classify_base(module, expected):
+    ret = classify_base(module)
     assert ret is expected
 
 
@@ -62,7 +80,7 @@ assert tp == Classified.APPLICATION, tp
 
     # simulate this situation for coverage
     with mock.patch.object(sys.modules['__main__'], '__spec__', None):
-        assert classify_base_uncached('__main__') == Classified.APPLICATION
+        assert classify_base('__main__') == Classified.APPLICATION
 
 
 def test_true_namespace_package(tmpdir):
@@ -72,18 +90,18 @@ def test_true_namespace_package(tmpdir):
     with mock.patch.object(sys, 'path', sys_path):
         # while this is a py3+ feature, classify_imports happens to get
         # this correct anyway!
-        assert classify_base_uncached('a') == Classified.THIRD_PARTY
+        assert classify_base('a') == Classified.THIRD_PARTY
 
 
 @pytest.mark.xfail(  # pragma: win32 no cover
     sys.platform == 'win32',
     reason='Expected fail for no symlink support',
 )
-def test_symlink_path_different(in_tmpdir, no_empty_path):
+def test_symlink_path_different(in_tmpdir):
     # symlink a file, these are likely to not be application files
     in_tmpdir.join('dest_file.py').ensure()
     in_tmpdir.join('src_file.py').mksymlinkto('dest-file.py')
-    ret = classify_base_uncached('src_file')
+    ret = classify_base('src_file')
     assert ret is Classified.THIRD_PARTY
 
 
@@ -108,19 +126,19 @@ def in_sys_path_and_pythonpath(pth):
 def test_classify_pythonpath_third_party(in_tmpdir):
     in_tmpdir.join('ppth').ensure_dir().join('f.py').ensure()
     with in_sys_path_and_pythonpath('ppth'):
-        assert classify_base_uncached('f') is Classified.THIRD_PARTY
+        assert classify_base('f') is Classified.THIRD_PARTY
 
 
 def test_classify_pythonpath_dot_app(in_tmpdir):
     in_tmpdir.join('f.py').ensure()
     with in_sys_path_and_pythonpath('.'):
-        assert classify_base_uncached('f') is Classified.APPLICATION
+        assert classify_base('f') is Classified.APPLICATION
 
 
 def test_classify_pythonpath_multiple(in_tmpdir):
     in_tmpdir.join('ppth').ensure_dir().join('f.py').ensure()
     with in_sys_path_and_pythonpath(os.pathsep.join(('ppth', 'foo'))):
-        assert classify_base_uncached('f') is Classified.THIRD_PARTY
+        assert classify_base('f') is Classified.THIRD_PARTY
 
 
 def test_classify_pythonpath_zipimport(in_tmpdir):
@@ -128,7 +146,7 @@ def test_classify_pythonpath_zipimport(in_tmpdir):
     with zipfile.ZipFile(str(path_zip), 'w') as fzip:
         fzip.writestr('fzip.py', '')
     with in_sys_path_and_pythonpath('ppth/fzip.zip'):
-        assert classify_base_uncached('fzip') is Classified.THIRD_PARTY
+        assert classify_base('fzip') is Classified.THIRD_PARTY
 
 
 def test_classify_embedded_builtin(in_tmpdir):
@@ -136,46 +154,46 @@ def test_classify_embedded_builtin(in_tmpdir):
     with zipfile.ZipFile(str(path_zip), 'w') as fzip:
         fzip.writestr('fzip.py', '')
     with in_sys_path('ppth/fzip.zip'):
-        assert classify_base_uncached('fzip') is Classified.BUILTIN
+        assert classify_base('fzip') is Classified.BUILTIN
 
 
-def test_file_existing_is_application_level(in_tmpdir, no_empty_path):
+def test_file_existing_is_application_level(in_tmpdir):
     in_tmpdir.join('my_file.py').ensure()
-    ret = classify_base_uncached('my_file')
+    ret = classify_base('my_file')
     assert ret is Classified.APPLICATION
 
 
-def test_package_existing_is_application_level(in_tmpdir, no_empty_path):
+def test_package_existing_is_application_level(in_tmpdir):
     in_tmpdir.join('my_package').ensure_dir().join('__init__.py').ensure()
-    ret = classify_base_uncached('my_package')
+    ret = classify_base('my_package')
     assert ret is Classified.APPLICATION
 
 
-def test_empty_directory_is_not_package(in_tmpdir, no_empty_path):
+def test_empty_directory_is_not_package(in_tmpdir):
     in_tmpdir.join('my_package').ensure_dir()
-    ret = classify_base_uncached('my_package')
+    ret = classify_base('my_package')
     assert ret is Classified.THIRD_PARTY
 
 
-def test_application_directories(in_tmpdir, no_empty_path):
+def test_application_directories(in_tmpdir):
     # Similar to @bukzor's testing setup
     in_tmpdir.join('tests/testing').ensure_dir().join('__init__.py').ensure()
     # Should be classified 3rd party without argument
-    ret = classify_base_uncached('testing')
+    ret = classify_base('testing')
     assert ret is Classified.THIRD_PARTY
     # Should be application with extra directories
-    ret = classify_base_uncached(
+    ret = classify_base(
         'testing',
         settings=Settings(application_directories=('.', 'tests')),
     )
     assert ret is Classified.APPLICATION
 
 
-def test_application_directory_case(in_tmpdir, no_empty_path):
+def test_application_directory_case(in_tmpdir):
     srcdir = in_tmpdir.join('SRC').ensure_dir()
     srcdir.join('my_package').ensure_dir().join('__init__.py').ensure()
     with in_sys_path('src'):
-        ret = classify_base_uncached(
+        ret = classify_base(
             'my_package',
             settings=Settings(application_directories=('SRC',)),
         )
@@ -184,10 +202,10 @@ def test_application_directory_case(in_tmpdir, no_empty_path):
 
 def test_unclassifiable_application_modules():
     # Should be classified 3rd party without argument
-    ret = classify_base_uncached('c_module')
+    ret = classify_base('c_module')
     assert ret is Classified.THIRD_PARTY
     # Should be classified application with the override
-    ret = classify_base_uncached(
+    ret = classify_base(
         'c_module',
         settings=Settings(
             unclassifiable_application_modules=frozenset(('c_module',)),
@@ -198,7 +216,7 @@ def test_unclassifiable_application_modules():
 
 def test_unclassifiable_application_modules_ignores_future():
     # Trying to force __future__ to be APPLICATION shouldn't have any effect
-    ret = classify_base_uncached(
+    ret = classify_base(
         '__future__',
         settings=Settings(
             unclassifiable_application_modules=frozenset(('__future__',)),
@@ -479,7 +497,7 @@ def test_future_from_always_first():
     )
 
 
-def test_passes_through_kwargs_to_classify(in_tmpdir, no_empty_path):
+def test_passes_through_kwargs_to_classify(in_tmpdir):
     # Make a module
     in_tmpdir.join('my_module.py').ensure()
 
