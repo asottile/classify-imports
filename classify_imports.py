@@ -4,10 +4,11 @@ import ast
 import collections
 import enum
 import functools
-import importlib.util
+import importlib.machinery
 import os.path
+import stat
 import sys
-import zipimport
+from typing import Callable
 from typing import Generator
 from typing import Iterable
 from typing import NamedTuple
@@ -19,97 +20,16 @@ else:  # pragma: <3.8 cover
 
 Classified = enum.Enum('Classified', 'FUTURE BUILTIN THIRD_PARTY APPLICATION')
 
+_STATIC_CLASSIFICATIONS = {
+    '__future__': Classified.FUTURE,
+    '__main__': Classified.APPLICATION,
+    # force distutils to be "third party" after being gobbled by setuptools
+    'distutils': Classified.THIRD_PARTY,
+    # relative imports: `from .foo import bar`
+    '': Classified.APPLICATION,
+}
 
-def _pythonpath_dirs() -> set[str]:
-    if 'PYTHONPATH' not in os.environ:
-        return set()
-
-    splitpath = os.environ['PYTHONPATH'].split(os.pathsep)
-    return {os.path.realpath(p) for p in splitpath} - {os.path.realpath('.')}
-
-
-def _due_to_pythonpath(module_path: str) -> bool:
-    mod_dir, _ = os.path.split(os.path.realpath(module_path))
-    return mod_dir in _pythonpath_dirs()
-
-
-def _samedrive(path1: str, path2: str) -> bool:
-    drive1, _ = os.path.splitdrive(path1)
-    drive2, _ = os.path.splitdrive(path2)
-    return drive1.upper() == drive2.upper()
-
-
-def _normcase_equal(path1: str, path2: str) -> bool:
-    return os.path.normcase(path1) == os.path.normcase(path2)
-
-
-def _has_path_prefix(path: str, *, prefix: str) -> bool:
-    # Both paths are assumed to be absolute.
-    return (
-        _samedrive(path, prefix) and
-        _normcase_equal(prefix, os.path.commonpath((path, prefix)))
-    )
-
-
-def _module_path_is_local_and_is_not_symlinked(
-        module_path: str, application_directories: tuple[str, ...],
-) -> bool:
-    def _is_a_local_path(potential_path: str) -> bool:
-        localpath = os.path.abspath(potential_path)
-        abspath = os.path.abspath(module_path)
-        realpath = os.path.realpath(module_path)
-        return (
-            _has_path_prefix(abspath, prefix=localpath) and
-            # It's possible (and surprisingly likely) that the consumer has a
-            # virtualenv inside the project directory.  We'd like to still
-            # consider things in the virtualenv as third party.
-            os.sep not in abspath[len(localpath) + 1:] and
-            _normcase_equal(abspath, realpath) and
-            os.path.exists(realpath)
-        )
-
-    return any(_is_a_local_path(path) for path in application_directories)
-
-
-def _find_local(
-        module_name: str,
-        application_directories: tuple[str, ...],
-) -> str:
-    for local_path in application_directories:
-        pkg_path = os.path.join(local_path, module_name)
-        mod_path = os.path.join(local_path, module_name + '.py')
-        if os.path.isdir(pkg_path) and os.listdir(pkg_path):
-            return pkg_path
-        elif os.path.exists(mod_path):
-            return mod_path
-    else:
-        # We did not find a local file that looked like the module
-        return module_name + '.notlocal'
-
-
-def _get_module_info(
-        module_name: str,
-        application_dirs: tuple[str, ...],
-) -> tuple[bool, str, bool]:
-    if module_name in sys.builtin_module_names:
-        return True, '(builtin)', True
-
-    spec = importlib.util.find_spec(module_name)
-    if spec is None:
-        return False, _find_local(module_name, application_dirs), False
-    # namespace packages
-    elif spec.origin is None:
-        assert spec.submodule_search_locations is not None
-        return True, next(iter(spec.submodule_search_locations)), False
-    elif isinstance(spec.loader, zipimport.zipimporter):
-        return True, spec.origin, False
-    elif os.path.split(spec.origin)[1] == '__init__.py':
-        return True, os.path.dirname(spec.origin), False
-    else:
-        return True, spec.origin, False
-
-
-PACKAGES_PATH = '-packages' + os.sep
+_BUILTIN_MODS = frozenset(sys.builtin_module_names)
 
 
 class Settings(NamedTuple):
@@ -117,42 +37,103 @@ class Settings(NamedTuple):
     unclassifiable_application_modules: frozenset[str] = frozenset()
 
 
+def _path_key(path: str) -> tuple[str, tuple[int, int]]:
+    path = path or '.'  # '' in sys.path is the current directory
+    # os.path.samestat uses (st_ino, st_dev) to determine equality
+    st = os.stat(path)
+    return path, (st.st_ino, st.st_dev)
+
+
+@functools.lru_cache(maxsize=None)
+def _get_path(
+        sys_path: tuple[str, ...],
+        app_dirs: tuple[str, ...],
+        pythonpath: str | None,
+) -> tuple[Callable[[str], object | None], tuple[str, ...]]:
+    app_dirs_ret = []
+    filtered_stats = set()
+    for p in app_dirs:
+        try:
+            p, key = _path_key(p)
+        except OSError:
+            continue
+        else:
+            if key not in filtered_stats:
+                app_dirs_ret.append(p)
+                filtered_stats.add(key)
+
+    if pythonpath:  # subtract out pythonpath from sys.path
+        for p in pythonpath.split(os.pathsep):
+            try:
+                filtered_stats.add(_path_key(p)[1])
+            except OSError:
+                pass
+
+    sys_path_ret = []
+    for p in sys_path:
+        if p.rstrip('/\\').endswith('-packages'):  # subtract out site-packages
+            continue
+
+        try:
+            p, key = _path_key(p)
+        except OSError:
+            continue
+        else:
+            if key not in filtered_stats:
+                sys_path_ret.append(p)
+                filtered_stats.add(key)
+
+    finder = functools.partial(
+        importlib.machinery.PathFinder.find_spec,
+        path=sys_path_ret,
+    )
+    return finder, tuple(app_dirs_ret)
+
+
+def _find_local(path: tuple[str, ...], base: str) -> bool:
+    for p in path:
+        p_dir = os.path.join(p, base)
+        try:
+            stat_dir = os.lstat(p_dir)
+        except OSError:
+            pass
+        else:
+            if stat.S_ISDIR(stat_dir.st_mode) and os.listdir(p_dir):
+                return True
+        try:
+            stat_file = os.lstat(os.path.join(p, f'{base}.py'))
+        except OSError:
+            pass
+        else:
+            return stat.S_ISREG(stat_file.st_mode)
+    else:
+        return False
+
+
 @functools.lru_cache(maxsize=None)
 def classify_base(
         base: str,
         settings: Settings = Settings(),
 ) -> Classified:
-    if base == '__future__':
-        return Classified.FUTURE
-    elif base == '__main__':
-        return Classified.APPLICATION
-    # force distutils to be "third party" after being gobbled by setuptools
-    elif base == 'distutils':
-        return Classified.THIRD_PARTY
-    elif base in settings.unclassifiable_application_modules:
-        return Classified.APPLICATION
-    # relative imports: `from .foo import bar`
-    elif base == '':
-        return Classified.APPLICATION
+    try:
+        return _STATIC_CLASSIFICATIONS[base]
+    except KeyError:
+        pass
 
-    found, module_path, is_builtin = _get_module_info(
-        base, settings.application_directories,
+    if base in settings.unclassifiable_application_modules:
+        return Classified.APPLICATION
+    elif base in _BUILTIN_MODS:
+        return Classified.BUILTIN
+
+    find_stdlib, app = _get_path(
+        tuple(sys.path),
+        settings.application_directories,
+        os.environ.get('PYTHONPATH'),
     )
 
-    # if the import system tells us it is builtin, it is builtin
-    if is_builtin:
-        return Classified.BUILTIN
-    # if the module path exists in the project directories
-    elif _module_path_is_local_and_is_not_symlinked(
-            module_path, settings.application_directories,
-    ):
+    if _find_local(app, base) is True:
         return Classified.APPLICATION
-    # Otherwise we assume it is a system module or a third party module
-    elif (
-            found and
-            PACKAGES_PATH not in module_path and
-            not _due_to_pythonpath(module_path)
-    ):
+    elif find_stdlib(base) is not None:
         return Classified.BUILTIN
     else:
         return Classified.THIRD_PARTY

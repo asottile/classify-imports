@@ -9,6 +9,7 @@ import zipfile
 from unittest import mock
 
 import pytest
+from classify_imports import _get_path
 from classify_imports import Classified
 from classify_imports import classify_base
 from classify_imports import import_obj_from_str
@@ -35,12 +36,26 @@ def no_empty_path():
 @pytest.fixture(autouse=True)
 def reset_caches():
     classify_base.cache_clear()
+    _get_path.cache_clear()
 
 
 @pytest.fixture
 def in_tmpdir(tmpdir):
     with tmpdir.as_cwd():
         yield tmpdir
+
+
+def test_get_path_removes_duplicate_app_dirs(tmpdir):
+    d1 = tmpdir.join('d1').ensure_dir()
+    _, app = _get_path((), (str(d1), str(d1)), None)
+    assert app == (str(d1),)
+
+
+def test_get_path_removes_non_existent_app_dirs(tmpdir):
+    d1 = tmpdir.join('d1').ensure_dir()
+    d2 = tmpdir.join('d2')
+    _, app = _get_path((), (str(d1), str(d2)), None)
+    assert app == (str(d1),)
 
 
 @pytest.mark.parametrize(
@@ -93,15 +108,25 @@ def test_true_namespace_package(tmpdir):
         assert classify_base('a') == Classified.THIRD_PARTY
 
 
-@pytest.mark.xfail(  # pragma: win32 no cover
-    sys.platform == 'win32',
-    reason='Expected fail for no symlink support',
-)
+xfail_win32 = pytest.mark.xfail(sys.platform == 'win32', reason='symlinks')
+
+
+@xfail_win32  # pragma: win32 no cover
 def test_symlink_path_different(in_tmpdir):
     # symlink a file, these are likely to not be application files
     in_tmpdir.join('dest_file.py').ensure()
     in_tmpdir.join('src_file.py').mksymlinkto('dest-file.py')
     ret = classify_base('src_file')
+    assert ret is Classified.THIRD_PARTY
+
+
+@xfail_win32  # pragma: win32 no cover
+def test_symlink_path_directory(in_tmpdir):
+    # symlink a dir, these are likely to not be application files
+    in_tmpdir.join('dest').ensure_dir()
+    in_tmpdir.join('dest/t.py').ensure()
+    in_tmpdir.join('srcmod').mksymlinkto('dest')
+    ret = classify_base('srcmod')
     assert ret is Classified.THIRD_PARTY
 
 
