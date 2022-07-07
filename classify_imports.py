@@ -182,7 +182,7 @@ class Import:
 
     @property
     def module_base(self) -> str:
-        return self.module.split('.')[0]
+        return self.module.partition('.')[0]
 
     @cached_property
     def key(self) -> ImportKey:
@@ -237,7 +237,7 @@ class ImportFrom:
 
     @property
     def module_base(self) -> str:
-        return self.module.split('.')[0]
+        return self.module.partition('.')[0]
 
     @cached_property
     def key(self) -> ImportFromKey:
