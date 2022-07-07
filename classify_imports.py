@@ -8,15 +8,24 @@ import operator
 import os.path
 import stat
 import sys
+from typing import Any
 from typing import Callable
 from typing import Generator
+from typing import Generic
 from typing import Iterable
 from typing import NamedTuple
+from typing import TypeVar
 
-if sys.version_info >= (3, 8):  # pragma: >=3.8 cover
-    from functools import cached_property
-else:  # pragma: <3.8 cover
-    cached_property = property
+T = TypeVar('T')
+
+
+class cached_property(Generic[T]):
+    def __init__(self, func: Callable[[Any], T]) -> None:
+        self._func = func
+
+    def __get__(self, instance: object, owner: type[Any]) -> T:
+        ret = instance.__dict__[self._func.__name__] = self._func(instance)
+        return ret
 
 
 class Classified:
