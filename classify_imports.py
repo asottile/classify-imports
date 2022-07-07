@@ -5,6 +5,7 @@ import collections
 import enum
 import functools
 import importlib.machinery
+import operator
 import os.path
 import stat
 import sys
@@ -289,8 +290,9 @@ def sort(
         imports_partitioned[tp].append(obj)
 
     # sort each of the segments
+    sortkey = operator.attrgetter('sort_key')
     for val in imports_partitioned.values():
-        val.sort(key=lambda obj: obj.sort_key)
+        val.sort(key=sortkey)
 
     return tuple(
         tuple(imports_partitioned[key])
