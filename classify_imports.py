@@ -171,10 +171,7 @@ class ImportKey(NamedTuple):
 class Import:
     def __init__(self, node: ast.Import) -> None:
         self.node = node
-
-    @property
-    def is_multiple(self) -> bool:
-        return len(self.node.names) > 1
+        self.is_multiple = len(node.names) > 1
 
     @property
     def module(self) -> str:
@@ -224,10 +221,7 @@ class ImportFromKey(NamedTuple):
 class ImportFrom:
     def __init__(self, node: ast.ImportFrom) -> None:
         self.node = node
-
-    @property
-    def is_multiple(self) -> bool:
-        return len(self.node.names) > 1
+        self.is_multiple = len(node.names) > 1
 
     @property
     def module(self) -> str:
