@@ -51,15 +51,19 @@ Utilities for refactoring imports in python-like syntax.
 ### classify a module
 
 ```python
->>> from classify_imports import classify_base, import_obj_from_str
+>>> from classify_imports import classify_base, import_obj_from_str, Classified
 >>> classify_base('__future__')
-<Classified.FUTURE: 0>
+'FUTURE'
 >>> classify_base('classify_imports')
-<Classified.APPLICATION: 3>
+'APPLICATION'
 >>> classify_base('pyramid')
-<Classified.THIRD_PARTY: 2>
+'THIRD_PARTY'
 >>> classify_base('os')
-<Classified.BUILTIN: 1>
+'BUILTIN'
 >>> classify_base(import_obj_from_str('import os.path').module_base)
-<Classified.BUILTIN: 1>
+'BUILTIN'
+>>> Classified.APPLICATION
+'APPLICATION'
+>>> Classified.order
+('FUTURE', 'BUILTIN', 'THIRD_PARTY', 'APPLICATION')
 ```

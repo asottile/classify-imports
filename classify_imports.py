@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import ast
 import collections
-import enum
 import functools
 import importlib.machinery
 import operator
@@ -19,7 +18,15 @@ if sys.version_info >= (3, 8):  # pragma: >=3.8 cover
 else:  # pragma: <3.8 cover
     cached_property = property
 
-Classified = enum.Enum('Classified', 'FUTURE BUILTIN THIRD_PARTY APPLICATION')
+
+class Classified:
+    FUTURE = 'FUTURE'
+    BUILTIN = 'BUILTIN'
+    THIRD_PARTY = 'THIRD_PARTY'
+    APPLICATION = 'APPLICATION'
+
+    order = (FUTURE, BUILTIN, THIRD_PARTY, APPLICATION)
+
 
 _STATIC_CLASSIFICATIONS = {
     '__future__': Classified.FUTURE,
@@ -115,7 +122,7 @@ def _find_local(path: tuple[str, ...], base: str) -> bool:
 def classify_base(
         base: str,
         settings: Settings = Settings(),
-) -> Classified:
+) -> str:
     try:
         return _STATIC_CLASSIFICATIONS[base]
     except KeyError:
@@ -280,7 +287,6 @@ def sort(
         settings: Settings = Settings(),
 ) -> tuple[tuple[Import | ImportFrom, ...], ...]:
     # Partition the imports
-    imports_partitioned: dict[Classified, list[Import | ImportFrom]]
     imports_partitioned = collections.defaultdict(list)
     for obj in imports:
         tp = classify_base(obj.module_base, settings=settings)
@@ -296,5 +302,5 @@ def sort(
 
     return tuple(
         tuple(imports_partitioned[key])
-        for key in Classified if key in imports_partitioned
+        for key in Classified.order if key in imports_partitioned
     )
