@@ -271,7 +271,7 @@ _import_type = {ast.Import: Import, ast.ImportFrom: ImportFrom}
 
 @functools.lru_cache(maxsize=None)
 def import_obj_from_str(s: str) -> Import | ImportFrom:
-    node = ast.parse(s).body[0]
+    node = ast.parse(s, mode='single').body[0]
     return _import_type[type(node)](node)
 
 
