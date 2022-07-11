@@ -9,6 +9,7 @@ import zipfile
 from unittest import mock
 
 import pytest
+
 from classify_imports import _get_path
 from classify_imports import Classified
 from classify_imports import classify_base
