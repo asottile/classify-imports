@@ -15,7 +15,7 @@ Utilities for refactoring imports in python-like syntax.
 
 ### splitting an import object
 
-```python
+```pycon
 >>> from classify_imports import import_obj_from_str
 >>> obj = import_obj_from_str('import foo, bar, baz')
 >>> [str(i) for i in obj.split()]
@@ -24,7 +24,7 @@ Utilities for refactoring imports in python-like syntax.
 
 ### sorting import objects
 
-```python
+```pycon
 # Or to partition into blocks (even with mixed imports)
 >>> import pprint
 >>> from classify_imports import import_obj_from_str, sort
@@ -50,7 +50,7 @@ Utilities for refactoring imports in python-like syntax.
 
 ### classify a module
 
-```python
+```pycon
 >>> from classify_imports import classify_base, import_obj_from_str, Classified
 >>> classify_base('__future__')
 'FUTURE'
