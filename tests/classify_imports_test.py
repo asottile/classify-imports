@@ -10,7 +10,6 @@ from unittest import mock
 
 import pytest
 
-from classify_imports import _get_path
 from classify_imports import Classified
 from classify_imports import classify_base
 from classify_imports import import_obj_from_str
@@ -18,6 +17,14 @@ from classify_imports import ImportFromKey
 from classify_imports import ImportKey
 from classify_imports import Settings
 from classify_imports import sort
+
+if sys.version_info >= (3, 10):  # pragma: >=3.10 cover
+    from classify_imports import _get_app
+else:  # pragma: <3.10 cover
+    from classify_imports import _get_path
+
+    def _get_app(dirs):
+        return _get_path((), dirs, None)[1]
 
 
 @pytest.fixture(autouse=True)
@@ -37,7 +44,10 @@ def no_empty_path():
 @pytest.fixture(autouse=True)
 def reset_caches():
     classify_base.cache_clear()
-    _get_path.cache_clear()
+    if sys.version_info >= (3, 10):  # pragma: >=3.10 cover
+        _get_app.cache_clear()
+    else:  # pragma: <3.10 cover
+        _get_path.cache_clear()
 
 
 @pytest.fixture
@@ -46,16 +56,16 @@ def in_tmpdir(tmpdir):
         yield tmpdir
 
 
-def test_get_path_removes_duplicate_app_dirs(tmpdir):
+def test_get_app_removes_duplicate_app_dirs(tmpdir):
     d1 = tmpdir.join('d1').ensure_dir()
-    _, app = _get_path((), (str(d1), str(d1)), None)
+    app = _get_app((str(d1), str(d1)))
     assert app == (str(d1),)
 
 
-def test_get_path_removes_non_existent_app_dirs(tmpdir):
+def test_get_app_removes_non_existent_app_dirs(tmpdir):
     d1 = tmpdir.join('d1').ensure_dir()
     d2 = tmpdir.join('d2')
-    _, app = _get_path((), (str(d1), str(d2)), None)
+    app = _get_app((str(d1), str(d2)))
     assert app == (str(d1),)
 
 
@@ -175,6 +185,7 @@ def test_classify_pythonpath_zipimport(in_tmpdir):
         assert classify_base('fzip') is Classified.THIRD_PARTY
 
 
+@pytest.mark.xfail(sys.version_info >= (3, 10), reason='3.10 we know directly')
 def test_classify_embedded_builtin(in_tmpdir):
     path_zip = in_tmpdir.join('ppth').ensure_dir().join('fzip.zip')
     with zipfile.ZipFile(str(path_zip), 'w') as fzip:

@@ -3,7 +3,6 @@ from __future__ import annotations
 import ast
 import collections
 import functools
-import importlib.machinery
 import operator
 import os.path
 import stat
@@ -46,8 +45,6 @@ _STATIC_CLASSIFICATIONS = {
     '': Classified.APPLICATION,
 }
 
-_BUILTIN_MODS = frozenset(sys.builtin_module_names)
-
 
 class Settings(NamedTuple):
     application_directories: tuple[str, ...] = ('.',)
@@ -59,52 +56,6 @@ def _path_key(path: str) -> tuple[str, tuple[int, int]]:
     # os.path.samestat uses (st_ino, st_dev) to determine equality
     st = os.stat(path)
     return path, (st.st_ino, st.st_dev)
-
-
-@functools.lru_cache(maxsize=None)
-def _get_path(
-        sys_path: tuple[str, ...],
-        app_dirs: tuple[str, ...],
-        pythonpath: str | None,
-) -> tuple[Callable[[str], object | None], tuple[str, ...]]:
-    app_dirs_ret = []
-    filtered_stats = set()
-    for p in app_dirs:
-        try:
-            p, key = _path_key(p)
-        except OSError:
-            continue
-        else:
-            if key not in filtered_stats:
-                app_dirs_ret.append(p)
-                filtered_stats.add(key)
-
-    if pythonpath:  # subtract out pythonpath from sys.path
-        for p in pythonpath.split(os.pathsep):
-            try:
-                filtered_stats.add(_path_key(p)[1])
-            except OSError:
-                pass
-
-    sys_path_ret = []
-    for p in sys_path:
-        if p.rstrip('/\\').endswith('-packages'):  # subtract out site-packages
-            continue
-
-        try:
-            p, key = _path_key(p)
-        except OSError:
-            continue
-        else:
-            if key not in filtered_stats:
-                sys_path_ret.append(p)
-                filtered_stats.add(key)
-
-    finder = functools.partial(
-        importlib.machinery.PathFinder.find_spec,
-        path=sys_path_ret,
-    )
-    return finder, tuple(app_dirs_ret)
 
 
 def _find_local(path: tuple[str, ...], base: str) -> bool:
@@ -127,33 +78,115 @@ def _find_local(path: tuple[str, ...], base: str) -> bool:
         return False
 
 
-@functools.lru_cache(maxsize=None)
-def classify_base(
-        base: str,
-        settings: Settings = Settings(),
-) -> str:
-    try:
-        return _STATIC_CLASSIFICATIONS[base]
-    except KeyError:
-        pass
+if sys.version_info >= (3, 10):  # pragma: >=3.10 cover
+    @functools.lru_cache(maxsize=None)
+    def _get_app(app_dirs: tuple[str, ...]) -> tuple[str, ...]:
+        app_dirs_ret = []
+        filtered_stats = set()
+        for p in app_dirs:
+            try:
+                p, key = _path_key(p)
+            except OSError:
+                continue
+            else:
+                if key not in filtered_stats:
+                    app_dirs_ret.append(p)
+                    filtered_stats.add(key)
 
-    if base in settings.unclassifiable_application_modules:
-        return Classified.APPLICATION
-    elif base in _BUILTIN_MODS:
-        return Classified.BUILTIN
+        return tuple(app_dirs_ret)
 
-    find_stdlib, app = _get_path(
-        tuple(sys.path),
-        settings.application_directories,
-        os.environ.get('PYTHONPATH'),
-    )
+    @functools.lru_cache(maxsize=None)
+    def classify_base(base: str, settings: Settings = Settings()) -> str:
+        try:
+            return _STATIC_CLASSIFICATIONS[base]
+        except KeyError:
+            pass
 
-    if _find_local(app, base) is True:
-        return Classified.APPLICATION
-    elif find_stdlib(base) is not None:
-        return Classified.BUILTIN
-    else:
-        return Classified.THIRD_PARTY
+        if base in sys.stdlib_module_names:
+            return Classified.BUILTIN
+        elif (
+                base in settings.unclassifiable_application_modules or
+                _find_local(_get_app(settings.application_directories), base)
+        ):
+            return Classified.APPLICATION
+        else:
+            return Classified.THIRD_PARTY
+
+else:  # pragma: <3.10 cover
+    import importlib.machinery
+
+    _BUILTIN_MODS = frozenset(sys.builtin_module_names)
+
+    @functools.lru_cache(maxsize=None)
+    def _get_path(
+            sys_path: tuple[str, ...],
+            app_dirs: tuple[str, ...],
+            pythonpath: str | None,
+    ) -> tuple[Callable[[str], object | None], tuple[str, ...]]:
+        app_dirs_ret = []
+        filtered_stats = set()
+        for p in app_dirs:
+            try:
+                p, key = _path_key(p)
+            except OSError:
+                continue
+            else:
+                if key not in filtered_stats:
+                    app_dirs_ret.append(p)
+                    filtered_stats.add(key)
+
+        if pythonpath:  # subtract out pythonpath from sys.path
+            for p in pythonpath.split(os.pathsep):
+                try:
+                    filtered_stats.add(_path_key(p)[1])
+                except OSError:
+                    pass
+
+        sys_path_ret = []
+        for p in sys_path:
+            # subtract out site-packages
+            if p.rstrip('/\\').endswith('-packages'):
+                continue
+
+            try:
+                p, key = _path_key(p)
+            except OSError:
+                continue
+            else:
+                if key not in filtered_stats:
+                    sys_path_ret.append(p)
+                    filtered_stats.add(key)
+
+        finder = functools.partial(
+            importlib.machinery.PathFinder.find_spec,
+            path=sys_path_ret,
+        )
+        return finder, tuple(app_dirs_ret)
+
+    @functools.lru_cache(maxsize=None)
+    def classify_base(base: str, settings: Settings = Settings()) -> str:
+        try:
+            return _STATIC_CLASSIFICATIONS[base]
+        except KeyError:
+            pass
+
+        if base in settings.unclassifiable_application_modules:
+            return Classified.APPLICATION
+        elif base in _BUILTIN_MODS:
+            return Classified.BUILTIN
+
+        find_stdlib, app = _get_path(
+            tuple(sys.path),
+            settings.application_directories,
+            os.environ.get('PYTHONPATH'),
+        )
+
+        if _find_local(app, base):
+            return Classified.APPLICATION
+        elif find_stdlib(base) is not None:
+            return Classified.BUILTIN
+        else:
+            return Classified.THIRD_PARTY
 
 
 def _ast_alias_to_s(node: ast.alias) -> str:
