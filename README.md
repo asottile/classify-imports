@@ -9,7 +9,9 @@ Utilities for refactoring imports in python-like syntax.
 
 ## installation
 
-`pip install classify-imports`
+```bash
+pip install classify-imports
+```
 
 ## examples
 
