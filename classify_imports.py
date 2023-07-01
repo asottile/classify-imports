@@ -7,24 +7,10 @@ import operator
 import os.path
 import stat
 import sys
-from typing import Any
 from typing import Callable
 from typing import Generator
-from typing import Generic
 from typing import Iterable
 from typing import NamedTuple
-from typing import TypeVar
-
-T = TypeVar('T')
-
-
-class cached_property(Generic[T]):
-    def __init__(self, func: Callable[[Any], T]) -> None:
-        self._func = func
-
-    def __get__(self, instance: object, owner: type[Any]) -> T:
-        ret = instance.__dict__[self._func.__name__] = self._func(instance)
-        return ret
 
 
 class Classified:
@@ -214,7 +200,7 @@ class Import:
     def module_base(self) -> str:
         return self.module.partition('.')[0]
 
-    @cached_property
+    @functools.cached_property
     def key(self) -> ImportKey:
         alias = self.node.names[0]
         return ImportKey(alias.name, alias.asname or '')
@@ -266,7 +252,7 @@ class ImportFrom:
     def module_base(self) -> str:
         return self.module.partition('.')[0]
 
-    @cached_property
+    @functools.cached_property
     def key(self) -> ImportFromKey:
         alias = self.node.names[0]
         return ImportFromKey(self.module, alias.name, alias.asname or '')
