@@ -294,7 +294,7 @@ def import_import():
 
 
 def test_import_import_node(import_import):
-    assert type(import_import.node) == ast.Import
+    assert type(import_import.node) is ast.Import
 
 
 def test_import_import_key(import_import):
@@ -375,7 +375,7 @@ def from_import():
 
 
 def test_from_import_node(from_import):
-    assert isinstance(from_import.node, ast.ImportFrom)
+    assert type(from_import.node) is ast.ImportFrom
 
 
 def test_from_import_key(from_import):
