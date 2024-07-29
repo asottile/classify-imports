@@ -216,7 +216,7 @@ class Import:
         name, asname = self.key
         return ('0', name.lower(), asname.lower(), name, asname)
 
-    def split(self) -> Generator[Import, None, None]:
+    def split(self) -> Generator[Import]:
         if not self.is_multiple:
             yield self
         else:
@@ -272,7 +272,7 @@ class ImportFrom:
             mod, name, asname,
         )
 
-    def split(self) -> Generator[ImportFrom, None, None]:
+    def split(self) -> Generator[ImportFrom]:
         if not self.is_multiple:
             yield self
         else:
