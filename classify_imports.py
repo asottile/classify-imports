@@ -7,9 +7,9 @@ import operator
 import os.path
 import stat
 import sys
+from collections.abc import Generator
+from collections.abc import Iterable
 from typing import Callable
-from typing import Generator
-from typing import Iterable
 from typing import NamedTuple
 
 
@@ -65,7 +65,7 @@ def _find_local(path: tuple[str, ...], base: str) -> bool:
 
 
 if sys.version_info >= (3, 10):  # pragma: >=3.10 cover
-    @functools.lru_cache(maxsize=None)
+    @functools.cache
     def _get_app(app_dirs: tuple[str, ...]) -> tuple[str, ...]:
         app_dirs_ret = []
         filtered_stats = set()
@@ -81,7 +81,7 @@ if sys.version_info >= (3, 10):  # pragma: >=3.10 cover
 
         return tuple(app_dirs_ret)
 
-    @functools.lru_cache(maxsize=None)
+    @functools.cache
     def classify_base(base: str, settings: Settings = Settings()) -> str:
         try:
             return _STATIC_CLASSIFICATIONS[base]
@@ -103,7 +103,7 @@ else:  # pragma: <3.10 cover
 
     _BUILTIN_MODS = frozenset(sys.builtin_module_names)
 
-    @functools.lru_cache(maxsize=None)
+    @functools.cache
     def _get_path(
             sys_path: tuple[str, ...],
             app_dirs: tuple[str, ...],
@@ -149,7 +149,7 @@ else:  # pragma: <3.10 cover
         )
         return finder, tuple(app_dirs_ret)
 
-    @functools.lru_cache(maxsize=None)
+    @functools.cache
     def classify_base(base: str, settings: Settings = Settings()) -> str:
         try:
             return _STATIC_CLASSIFICATIONS[base]
@@ -298,7 +298,7 @@ class ImportFrom:
 _import_type = {ast.Import: Import, ast.ImportFrom: ImportFrom}
 
 
-@functools.lru_cache(maxsize=None)
+@functools.cache
 def import_obj_from_str(s: str) -> Import | ImportFrom:
     node = ast.parse(s, mode='single').body[0]
     return _import_type[type(node)](node)
