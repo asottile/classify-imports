@@ -10,6 +10,7 @@ from unittest import mock
 
 import pytest
 
+from classify_imports import _get_app
 from classify_imports import Classified
 from classify_imports import classify_base
 from classify_imports import import_obj_from_str
@@ -17,14 +18,6 @@ from classify_imports import ImportFromKey
 from classify_imports import ImportKey
 from classify_imports import Settings
 from classify_imports import sort
-
-if sys.version_info >= (3, 10):  # pragma: >=3.10 cover
-    from classify_imports import _get_app
-else:  # pragma: <3.10 cover
-    from classify_imports import _get_path
-
-    def _get_app(dirs):
-        return _get_path((), dirs, None)[1]
 
 
 @pytest.fixture(autouse=True)
@@ -44,10 +37,7 @@ def no_empty_path():
 @pytest.fixture(autouse=True)
 def reset_caches():
     classify_base.cache_clear()
-    if sys.version_info >= (3, 10):  # pragma: >=3.10 cover
-        _get_app.cache_clear()
-    else:  # pragma: <3.10 cover
-        _get_path.cache_clear()
+    _get_app.cache_clear()
 
 
 @pytest.fixture
@@ -183,15 +173,6 @@ def test_classify_pythonpath_zipimport(in_tmpdir):
         fzip.writestr('fzip.py', '')
     with in_sys_path_and_pythonpath('ppth/fzip.zip'):
         assert classify_base('fzip') is Classified.THIRD_PARTY
-
-
-@pytest.mark.xfail(sys.version_info >= (3, 10), reason='3.10 we know directly')
-def test_classify_embedded_builtin(in_tmpdir):
-    path_zip = in_tmpdir.join('ppth').ensure_dir().join('fzip.zip')
-    with zipfile.ZipFile(str(path_zip), 'w') as fzip:
-        fzip.writestr('fzip.py', '')
-    with in_sys_path('ppth/fzip.zip'):
-        assert classify_base('fzip') is Classified.BUILTIN
 
 
 def test_file_existing_is_application_level(in_tmpdir):
