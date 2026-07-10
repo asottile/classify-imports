@@ -21,11 +21,12 @@ if sys.version_info < (3, 14):  # pragma: <3.14 cover
             *,
             module: str | None = None,
             names: list[ast.alias] | None = None,
+            level: int | None = None,
     ) -> ast.ImportFrom:
         return ast.ImportFrom(
             module=o.module if module is None else module,
             names=o.names if names is None else names,
-            level=o.level,
+            level=o.level if level is None else level,
         )
 else:  # pragma: >=3.14 cover
     import_replace = ast.Import.__replace__
