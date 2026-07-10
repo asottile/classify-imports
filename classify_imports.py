@@ -135,9 +135,10 @@ class Import:
         return isinstance(other, Import) and self.key == other.key
 
     @property
-    def sort_key(self) -> tuple[str, str, str, str, str]:
+    def sort_key(self) -> tuple[str, ...]:
+        lazy = str(getattr(self.node, 'is_lazy', 0))
         name, asname = self.key
-        return ('0', name.lower(), asname.lower(), name, asname)
+        return (lazy, '0', name.lower(), asname.lower(), name, asname)
 
     def split(self) -> Generator[Import]:
         if not self.is_multiple:
@@ -187,9 +188,11 @@ class ImportFrom:
         return isinstance(other, ImportFrom) and self.key == other.key
 
     @property
-    def sort_key(self) -> tuple[str, str, str, str, str, str, str]:
+    def sort_key(self) -> tuple[str, ...]:
+        lazy = str(getattr(self.node, 'is_lazy', 0))
         mod, name, asname = self.key
         return (
+            lazy,
             '1',
             mod.lower(), name.lower(), asname.lower(),
             mod, name, asname,

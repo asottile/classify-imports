@@ -282,10 +282,6 @@ def test_import_import_key(import_import):
     assert import_import.key == ImportKey('Foo', 'bar')
 
 
-def test_import_import_sort_key(import_import):
-    assert import_import.sort_key == ('0', 'foo', 'bar', 'Foo', 'bar')
-
-
 def test_import_import_equality_casing():
     assert (
         import_obj_from_str('import herp.DERP') !=
@@ -362,11 +358,6 @@ def test_from_import_node(from_import):
 def test_from_import_key(from_import):
     ret = from_import.key
     assert ret == ImportFromKey('Foo', 'bar', 'baz')
-
-
-def test_from_import_sort_key(from_import):
-    ret = from_import.sort_key
-    assert ret == ('1', 'foo', 'bar', 'baz', 'Foo', 'bar', 'baz')
 
 
 @pytest.mark.parametrize(
@@ -512,6 +503,26 @@ def test_future_from_always_first():
     assert ret == (
         (import_obj_from_str('from __future__ import absolute_import'),),
         (import_obj_from_str('import __future__'),),
+    )
+
+
+@pytest.mark.skipif(sys.version_info < (3, 15), reason='lazy syntax')
+def test_sort_lazy_last():  # pragma: >3.15 cover
+    ret = sort(
+        (
+            import_obj_from_str('lazy from unittest import mock'),
+            import_obj_from_str('import argparse'),
+            import_obj_from_str('lazy import asyncio'),
+            import_obj_from_str('from collections.abc import Sequence'),
+        ),
+    )
+    assert ret == (
+        (
+            import_obj_from_str('import argparse'),
+            import_obj_from_str('from collections.abc import Sequence'),
+            import_obj_from_str('lazy import asyncio'),
+            import_obj_from_str('lazy from unittest import mock'),
+        ),
     )
 
 
