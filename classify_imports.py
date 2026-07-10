@@ -12,6 +12,26 @@ from collections.abc import Iterable
 from typing import NamedTuple
 
 
+if sys.version_info < (3, 14):  # pragma: <3.14 cover
+    def import_replace(o: ast.Import, *, names: list[ast.alias]) -> ast.Import:
+        return ast.Import(names=names)
+
+    def import_from_replace(
+            o: ast.ImportFrom,
+            *,
+            module: str | None = None,
+            names: list[ast.alias] | None = None,
+    ) -> ast.ImportFrom:
+        return ast.ImportFrom(
+            module=o.module if module is None else module,
+            names=o.names if names is None else names,
+            level=o.level,
+        )
+else:  # pragma: >=3.14 cover
+    import_replace = ast.Import.__replace__
+    import_from_replace = ast.ImportFrom.__replace__
+
+
 class Classified:
     FUTURE = 'FUTURE'
     BUILTIN = 'BUILTIN'
@@ -110,6 +130,12 @@ class ImportKey(NamedTuple):
     asname: str
 
 
+class ImportKeyWithLazy(NamedTuple):
+    module: str
+    asname: str
+    lazy: int
+
+
 class Import:
     def __init__(self, node: ast.Import) -> None:
         self.node = node
@@ -124,32 +150,57 @@ class Import:
         return self.module.partition('.')[0]
 
     @functools.cached_property
-    def key(self) -> ImportKey:
+    def lazy(self) -> int:
+        return getattr(self.node, 'is_lazy', 0)
+
+    @functools.cached_property
+    def key(self) -> ImportKey:  # pragma: no cover (deprecated)
+        import warnings
+
+        warnings.warn(
+            'use key_with_lazy instead',
+            DeprecationWarning,
+            stacklevel=2,
+        )
+
         alias = self.node.names[0]
         return ImportKey(alias.name, alias.asname or '')
 
+    @functools.cached_property
+    def key_with_lazy(self) -> ImportKeyWithLazy:
+        alias = self.node.names[0]
+        return ImportKeyWithLazy(alias.name, alias.asname or '', self.lazy)
+
     def __hash__(self) -> int:
-        return hash(self.key)
+        return hash(self.key_with_lazy)
 
     def __eq__(self, other: object) -> bool:
-        return isinstance(other, Import) and self.key == other.key
+        return (
+            isinstance(other, Import) and
+            self.key_with_lazy == other.key_with_lazy
+        )
 
     @property
     def sort_key(self) -> tuple[str, ...]:
-        lazy = str(getattr(self.node, 'is_lazy', 0))
-        name, asname = self.key
-        return (lazy, '0', name.lower(), asname.lower(), name, asname)
+        name, asname, lazy = self.key_with_lazy
+        return (
+            str(lazy),
+            '0',
+            name.lower(), asname.lower(),
+            name, asname,
+        )
 
     def split(self) -> Generator[Import]:
         if not self.is_multiple:
             yield self
         else:
             for name in self.node.names:
-                yield type(self)(ast.Import(names=[name]))
+                yield type(self)(import_replace(self.node, names=[name]))
 
     def __str__(self) -> str:
+        lazy = 'lazy ' if self.lazy else ''
         assert not self.is_multiple
-        return f'import {_ast_alias_to_s(self.node.names[0])}\n'
+        return f'{lazy}import {_ast_alias_to_s(self.node.names[0])}\n'
 
     def __repr__(self) -> str:
         return f'import_obj_from_str({str(self)!r})'
@@ -159,6 +210,13 @@ class ImportFromKey(NamedTuple):
     module: str
     symbol: str
     asname: str
+
+
+class ImportFromKeyWithLazy(NamedTuple):
+    module: str
+    symbol: str
+    asname: str
+    lazy: int
 
 
 class ImportFrom:
@@ -177,22 +235,43 @@ class ImportFrom:
         return self.module.partition('.')[0]
 
     @functools.cached_property
-    def key(self) -> ImportFromKey:
+    def lazy(self) -> int:
+        return getattr(self.node, 'is_lazy', 0)
+
+    @functools.cached_property
+    def key(self) -> ImportFromKey:  # pragma: no cover (deprecated)
+        import warnings
+
+        warnings.warn(
+            'use key_with_lazy instead',
+            DeprecationWarning,
+            stacklevel=2,
+        )
+
         alias = self.node.names[0]
         return ImportFromKey(self.module, alias.name, alias.asname or '')
 
+    @functools.cached_property
+    def key_with_lazy(self) -> ImportFromKeyWithLazy:
+        alias = self.node.names[0]
+        return ImportFromKeyWithLazy(
+            self.module, alias.name, alias.asname or '', self.lazy,
+        )
+
     def __hash__(self) -> int:
-        return hash(self.key)
+        return hash(self.key_with_lazy)
 
     def __eq__(self, other: object) -> bool:
-        return isinstance(other, ImportFrom) and self.key == other.key
+        return (
+            isinstance(other, ImportFrom) and
+            self.key_with_lazy == other.key_with_lazy
+        )
 
     @property
     def sort_key(self) -> tuple[str, ...]:
-        lazy = str(getattr(self.node, 'is_lazy', 0))
-        mod, name, asname = self.key
+        mod, name, asname, lazy = self.key_with_lazy
         return (
-            lazy,
+            str(lazy),
             '1',
             mod.lower(), name.lower(), asname.lower(),
             mod, name, asname,
@@ -203,17 +282,14 @@ class ImportFrom:
             yield self
         else:
             for name in self.node.names:
-                node = ast.ImportFrom(
-                    module=self.node.module,
-                    names=[name],
-                    level=self.node.level,
-                )
+                node = import_from_replace(self.node, names=[name])
                 yield type(self)(node)
 
     def __str__(self) -> str:
+        lazy = 'lazy ' if self.lazy else ''
         assert not self.is_multiple
         return (
-            f'from {self.module} '
+            f'{lazy}from {self.module} '
             f'import {_ast_alias_to_s(self.node.names[0])}\n'
         )
 

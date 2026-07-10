@@ -14,8 +14,8 @@ from classify_imports import _get_app
 from classify_imports import Classified
 from classify_imports import classify_base
 from classify_imports import import_obj_from_str
-from classify_imports import ImportFromKey
-from classify_imports import ImportKey
+from classify_imports import ImportFromKeyWithLazy
+from classify_imports import ImportKeyWithLazy
 from classify_imports import Settings
 from classify_imports import sort
 
@@ -246,27 +246,27 @@ def test_unclassifiable_application_modules_ignores_future():
 @pytest.mark.parametrize(
     ('input_str', 'expected'),
     (
-        ('from foo import bar', ImportFromKey('foo', 'bar', '')),
-        ('from foo import bar as baz', ImportFromKey('foo', 'bar', 'baz')),
-        ('from . import bar', ImportFromKey('.', 'bar', '')),
-        ('from .foo import bar', ImportFromKey('.foo', 'bar', '')),
-        ('from .. import bar', ImportFromKey('..', 'bar', '')),
-        ('from ..foo import bar', ImportFromKey('..foo', 'bar', '')),
+        ('from a import b', ImportFromKeyWithLazy('a', 'b', '', 0)),
+        ('from a import b as c', ImportFromKeyWithLazy('a', 'b', 'c', 0)),
+        ('from . import b', ImportFromKeyWithLazy('.', 'b', '', 0)),
+        ('from .a import b', ImportFromKeyWithLazy('.a', 'b', '', 0)),
+        ('from .. import b', ImportFromKeyWithLazy('..', 'b', '', 0)),
+        ('from ..a import b', ImportFromKeyWithLazy('..a', 'b', '', 0)),
     ),
 )
-def test_from_import_key_from_python_ast(input_str, expected):
-    assert import_obj_from_str(input_str).key == expected
+def test_from_import_key_with_lazy(input_str, expected):
+    assert import_obj_from_str(input_str).key_with_lazy == expected
 
 
 @pytest.mark.parametrize(
     ('input_str', 'expected'),
     (
-        ('import foo', ImportKey('foo', '')),
-        ('import foo as bar', ImportKey('foo', 'bar')),
+        ('import foo', ImportKeyWithLazy('foo', '', 0)),
+        ('import foo as bar', ImportKeyWithLazy('foo', 'bar', 0)),
     ),
 )
-def test_import_import_sort_key_from_python_ast(input_str, expected):
-    assert import_obj_from_str(input_str).key == expected
+def test_import_key_with_lazy(input_str, expected):
+    assert import_obj_from_str(input_str).key_with_lazy == expected
 
 
 @pytest.fixture
@@ -276,10 +276,6 @@ def import_import():
 
 def test_import_import_node(import_import):
     assert type(import_import.node) is ast.Import
-
-
-def test_import_import_key(import_import):
-    assert import_import.key == ImportKey('Foo', 'bar')
 
 
 def test_import_import_equality_casing():
@@ -353,11 +349,6 @@ def from_import():
 
 def test_from_import_node(from_import):
     assert type(from_import.node) is ast.ImportFrom
-
-
-def test_from_import_key(from_import):
-    ret = from_import.key
-    assert ret == ImportFromKey('Foo', 'bar', 'baz')
 
 
 @pytest.mark.parametrize(
@@ -507,7 +498,31 @@ def test_future_from_always_first():
 
 
 @pytest.mark.skipif(sys.version_info < (3, 15), reason='lazy syntax')
-def test_sort_lazy_last():  # pragma: >3.15 cover
+def test_split_lazy_import():  # pragma: >=3.15 cover
+    ret = tuple(import_obj_from_str('lazy import a, b').split())
+    assert ret == (
+        import_obj_from_str('lazy import a'),
+        import_obj_from_str('lazy import b'),
+    )
+
+
+@pytest.mark.skipif(sys.version_info < (3, 15), reason='lazy syntax')
+def test_split_lazy_from_import():  # pragma: >=3.15 cover
+    ret = tuple(import_obj_from_str('lazy from y import a, b').split())
+    assert ret == (
+        import_obj_from_str('lazy from y import a'),
+        import_obj_from_str('lazy from y import b'),
+    )
+
+
+@pytest.mark.skipif(sys.version_info < (3, 15), reason='lazy syntax')
+@pytest.mark.parametrize('s', ('lazy import a\n', 'lazy from a import b\n'))
+def test_lazy_import_str(s):  # pragma: >=3.15 cover
+    assert str(import_obj_from_str(s)) == s
+
+
+@pytest.mark.skipif(sys.version_info < (3, 15), reason='lazy syntax')
+def test_sort_lazy_last():  # pragma: >=3.15 cover
     ret = sort(
         (
             import_obj_from_str('lazy from unittest import mock'),
