@@ -160,7 +160,7 @@ class Import:
         warnings.warn(
             'use key_with_lazy instead',
             DeprecationWarning,
-            stacklevel=2,
+            stacklevel=3,
         )
 
         alias = self.node.names[0]
@@ -245,7 +245,7 @@ class ImportFrom:
         warnings.warn(
             'use key_with_lazy instead',
             DeprecationWarning,
-            stacklevel=2,
+            stacklevel=3,
         )
 
         alias = self.node.names[0]
